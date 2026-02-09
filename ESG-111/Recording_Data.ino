@@ -22,11 +22,24 @@ Adafruit Circuit Playground Express was used
 
 #define LightSensor A8
 #define WindowSize 10
+int LightData[100] = {};
 
 void Setup(){
     Serial.begin(9600);
+    pinMode(LightSensor, INPUT);
 }
 
 void Loop(){
-
+    for(int i = 0; i < 100; i++){
+        LightData[i] = analogRead(LightSensor);
+        if(i >= WindowSize - 1){
+            int sum = 0;
+            for(int j = i - WindowSize + 1; j <= i; j++){
+                sum += LightData[j];
+            }
+            Serial.println(sum / WindowSize);
+        }
+        delay(100);
+    }
+    
 }
