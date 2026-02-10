@@ -5,7 +5,7 @@ Format:
 Course     
     Topic Number
         Assignment                                          Date Complete(MM/DD/YY)
-
+# ESG-111
 ESG-111:
     Topic 3:
         Part4                                                   2/8/26
@@ -13,7 +13,7 @@ ESG-111:
         Responding to Sensor Input                              2/10/26
 
     Topic 4:
-        Using Compiler Errors to Diagnose Syntax Bugs           2/--/26 Incomplete
+        Using Compiler Errors to Diagnose Syntax Bugs           2/10/26
         Using the Serial Monitor to Find Bugs                   2/--/26 Incomplete
 
     Topic 5:
@@ -33,7 +33,7 @@ ESG-111:
         Object-Oriented Programming                             4/--/26 Incomplete
 
 
-
+# MAT-262
 MAT-262:
     Topic 2:
         Project 1 - Intro. to MATLAB                            1/13/26

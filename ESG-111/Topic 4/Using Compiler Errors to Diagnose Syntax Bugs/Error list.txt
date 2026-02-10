@@ -1,0 +1,120 @@
+
+
+void setup(9600) {
+
+    Compilation error: variable or field 'setup' declared void
+
+    With functions requiring a value as input, the variable name is used in parenthesis not the value itself, void setup is not expecting or using the value regardless. 
+
+
+
+pinMode(4,INPUT_PULL_DOWN);
+
+
+    Compilation error: 'INPUT_PULL_DOWN' was not declared in this scope
+
+    INPUT_PULL_DOWN is not a defined function/variable. arduinos don't have internal pulldown resistors, they have pull up resistors or require external pulldown resistors
+
+
+PinMode(5, INPUT_PULL_DOWN);
+
+    Compilation error: 'INPUT_PULL_DOWN' was not declared in this scope
+    Compilation error: 'PinMode' was not declared in this scope
+
+    Same issue as before, additionally PinMode is improperly capitalized, "P" is uppercase rather than lowercase
+
+
+
+attachInterrupt(digitalPinToInterrupt(4), strstp, RISING);
+
+    Compilation error: 'strstp' was not declared in this scope
+
+ Brackets were missing at the end of void startup(), extending functions beyond intended scope, not allowing void strstp to be declared 
+
+
+
+
+attachInterrupt(digitalPinToInterrupt(5), lap, RISING);
+
+    Compilation error: 'lap' was not declared in this scope
+
+ Brackets were missing at the end of void startup(), extending functions beyond intended scope, not allowing void lap to be declared 
+
+
+digitalWrite(13, Low);
+
+    error: 'Low' was not declared in this scope
+
+    'Low' should be all capitalized 'LOW'
+
+
+
+start_time = Millis();
+
+    'Millis' was not declared in this scope
+
+    'Millis' is incorrectly capitalized it should be 'millis'
+
+
+digitalWrite(13, high);
+
+    'high' was not declared in this scope
+
+    'high' should be all capitalized 'HIGH'
+
+
+if ((cur - start_time) < 100)
+
+    'cur' was not declared in this scope
+
+    'cur' is misspelled it should be 'curr'
+
+
+
+serial.print("Lap: ");
+
+    'serial' was not declared in this scope
+
+    'serial' is incorrectly capitalized it should be 'Serial'
+
+
+DigitalWrite(13, LOW);
+
+    'DigitalWrite' was not declared in this scope
+
+    'DigitalWrite' is incorrectly capitalized it should be 'digitalWrite'
+
+
+
+stat_time = 0;
+
+    'stat_time' was not declared in this scope
+
+    'stat_time' is misspelled it should be 'start_time'
+
+
+
+int curr = mills();
+
+    'mills' was not declared in this scope
+
+    'mills' is misspelled it should be 'millis'
+
+
+retrun;
+
+    'retrun' was not declared in this scope
+
+    'retrun' is misspelled it should be 'return'
+
+
+Serial.println("s");
+
+    expected ';' before 'Serial'
+
+    The previous line 'Serial.print(((double)(curr - lap_time))/1000)' did not end with a ;
+
+
+undefined reference to `loop'
+
+    There is no void loop() function which is required for the arduino ide language
