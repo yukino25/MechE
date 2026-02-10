@@ -43,39 +43,6 @@ N = number of chirps per minute
 Adafruit circuit playground express was used
 */
 
-#define TempPin A9
-#define Speaker A0
-
-float Vout;
-float Rt;
-float Temp_C;
-float Temp_F;
-float Chirp_Min;
-int minute = 60000;
-
-void setup() {
-    Serial.begin(9600);
-    pinMode(TempPin, INPUT);
-    pinMode(Speaker, OUTPUT);
-}
-
-
-void loop(){
-    //voltage of the thermistor
-    Vout = 3.3/1024*analogRead(TempPin);
-    //reistance of the thermistor
-    Rt = 33000/Vout - 10000;
-    //temperature in celcius and fahrenheit
-    Temp_C = 3380/log(Rt/(10000*exp(-3380/298.15)));
-    Temp_F = Temp_C*1.8 + 32;
-
-    Chirp_Min = 4*Temp_F - 160;
-    tone(Speaker, 1000, 100);
-    //delay between chiprs to produce the correct number of chirps per minute
-    delay(minute/Chirp_Min);
-}
-
-
 
 #define TempPin A9
 #define Speaker A0
@@ -104,13 +71,14 @@ void loop(){
     Temp_F = Temp_C*1.8 + 32;
 
     Chirp_Min = 4*Temp_F - 160;
-   tone(Speaker, 1000);
+    tone(Speaker, 1000, 100);
     //delay between chiprs to produce the correct number of chirps per minute
+    //subtracting 100ms from the delay to account for chirp duration
     Serial.println(Vout);
     Serial.println(Rt);
     Serial.println(Temp_C);
     Serial.println(Temp_F);
     Serial.println(Chirp_Min);
 
-    delay(minute/Chirp_Min);
+    delay(minute/Chirp_Min-100);
 }
