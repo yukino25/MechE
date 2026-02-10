@@ -72,7 +72,7 @@ void loop(){
 
     Chirp_Min = 4*Temp_F - 160;
     tone(Speaker, 1000, 100);
-    //delay between chiprs to produce the correct number of chirps per minute
+    //delay between chirps to produce the correct number of chirps per minute
     //subtracting 100ms from the delay to account for chirp duration
     Serial.println(Vout);
     Serial.println(Rt);
