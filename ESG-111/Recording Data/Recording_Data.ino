@@ -23,6 +23,7 @@ Adafruit Circuit Playground Express was used
 #define LightSensor A8
 #define WindowSize 10
 int LightData[100] = {};
+
 void setup(){
     Serial.begin(9600);
     pinMode(LightSensor, INPUT);
@@ -38,6 +39,7 @@ void loop(){
             for(int j = i - WindowSize + 1; j <= i; j++){
                 sum += LightData[j];
             }
+            
             Serial.print("Average:");
             Serial.print(sum / WindowSize);
             Serial.print("Raw Data:");
