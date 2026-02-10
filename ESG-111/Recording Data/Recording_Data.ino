@@ -32,6 +32,7 @@ void loop(){
 
     for(int i = 0; i < 100; i++){
         LightData[i] = analogRead(LightSensor);
+        // makes 10 sample average
         if(i >= WindowSize - 1){
             int sum = 0;
             for(int j = i - WindowSize + 1; j <= i; j++){
