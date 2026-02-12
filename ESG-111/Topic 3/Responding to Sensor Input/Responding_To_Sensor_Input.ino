@@ -64,7 +64,7 @@ void setup() {
 void loop(){
     //voltage of the thermistor
     Vout = 3.3 * analogRead(TempPin) / 1023.0;
-    //reistance of the thermistor
+    //resistance of the thermistor
     Rt = 33000/Vout - 10000;
     //temperature in celcius and fahrenheit
     Temp_C = 3380/log(Rt/(10000*exp(-3380/298.15))) - 273.15;

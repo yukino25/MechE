@@ -1,0 +1,53 @@
+ int timer = 3000;  //sets timer to 30sec
+    time is measured in milliseconds, this results in only 3 Seconds
+    change to:  int timer = 30000;
+
+
+  int num_pixels = 7; //the number of NeoPixels on the Circuit Playground Express
+    this only uses 7 of the 10 leds on the board
+    changed to   int num_pixels = 10; 
+
+
+  int red=125;
+  int green=50;
+  int blue=55;
+    expected RGB is (68,0,153) red should be 68,green should be 0,blue should be 153
+    Change to 
+    int red=68;
+    int green=0;
+    int blue=153;
+
+   if(digitalRead(5)) //button D4 starts the timer
+    this reads from pin 5 instead of pin 4
+    Changed to    if(digitalRead(4))
+
+
+    for(j=1; j < j; j++)  //turns on all NeoPixels up to current counter
+        This compares the value of j to j which breaks the loop. leds begin at 0, this skips one led
+        changed to   for(j=0; j <= i; j++)
+
+    CircuitPlayground.setPixelColor(j,green,red,blue); //illuminates in purple 
+        The order of color values are incorrect it is reading green in reds place, red in greens place
+        changed to CircuitPlayground.setPixelColor(j,red,green,blue);
+
+
+    tone(A0, 3990, 200);  //plays a pleasant 399Hz sound for 200ms to signal end of timer. 
+        the frequency is read as 3390Hz
+        changed to   tone(A0, 399, 200); 
+
+    CircuitPlayground.setPixelColor(j, blue, green, red); 
+        The order of color values are incorrect
+        changed to CircuitPlayground.setPixelColor(j,red,green,blue);
+
+    tone(A0, 399, 200); //plays a pleasant 399Hz sound for 200ms to signal end of timer.
+        currently this plays every 3 seconds rather than at the end of the timer
+        moved to after the for(i=9;i>1;i--) loop
+
+
+    delay(count_time);  //per fade step delay
+        the delay was before the leds were set on, currently the leds would be set on then emedietly turned off
+        it was moved to right before clearPixels()
+
+    for(i=9; i>1; i--) //turns on off NeoPixels one by one
+        ends before the first leds can turn off
+        changed to for(i=9; i>=0; i--);
