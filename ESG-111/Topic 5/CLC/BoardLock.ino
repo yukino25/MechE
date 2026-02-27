@@ -14,7 +14,7 @@ CPX toggle switch between read and write mode for RFID
 #include <FlashStorage.h>
 
 //*Pin numbers
-#define RFID_MODE_PIN 7
+#define RFID_MODE 7
 #define BUZZER_PIN A0
 #define RST_PIN A2
 #define SS_PIN A1
@@ -45,12 +45,12 @@ MFRC522::MIFARE_Key key;
 
 // Stores the last randomly written key so RUN() can verify against it
 byte storedKey[16];
-
+byte buffer[18];
 
 void setup() {
   Serial.begin(9600);
   CircuitPlayground.begin();
-  pinMode(RFID_MODE_PIN, INPUT_PULLUP);
+  pinMode(RFID_MODE, INPUT_PULLUP);
   pinMode(BUZZER_PIN, OUTPUT);
 
   // Random number generator using floating analog pins and micros
@@ -121,7 +121,7 @@ void RFID_WRITE() {
     byte blockAddr      = 4;
 
     // Generate a random 16-byte key and store it for later verification in RUN()
-    byte dataBlock[16];
+
     for (byte i = 0; i < 16; i++) {
         dataBlock[i] = random(0, 256);
     }
@@ -273,6 +273,7 @@ bool MOVEMENT_DETECT(){
 
 //? read data from RFID to enable/disable "lock state" of board, control buzzer based on lock state
 void RFID_READ() {
+
     // Reset the loop if no new card present on the sensor/reader. This saves the entire process when idle.
     if ( ! mfrc522.PICC_IsNewCardPresent()){
         return;
