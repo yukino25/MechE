@@ -32,7 +32,7 @@ CPX toggle switch between read and write mode for RFID
 //*Variables
 //accelerometer variables
 float x, y, z;
-float threshold = 9.8; //threshold for movement detection
+const float threshold = 1.5; //threshold for movement detection
 //lock state variable, toggle when correct RFID tag is detected, controls whether movement detection and buzzer are active
 bool lock = false;
 
@@ -49,9 +49,7 @@ unsigned long noMovementSince = 0;   // when continuous no-movement started (whi
 bool          cardPending      = false;
 unsigned long cardDetectedTime = 0;
 
-float x_change = 0;
-float y_change = 0;
-float z_change = 0;
+float magnitude;
 
 
 // Struct and flash storage slot for keeping the key across power cycles
@@ -283,28 +281,8 @@ void RUN(){
 
 //? detect movement using accelerometer
 bool MOVEMENT_DETECT(){
-    // means board is not flat, check which axis is vertical and adjust threshold accordingly
-    if abs(z) < 9.8>{
-        if abs(x) > 9.8 && abs(y) < 9.8 {
-            // x is vertical
-            x_change = 9.8;
-            y_change = 0;
-            z_change = 0;
-        }
-        else if abs(y) > 9.8 && abs(x) < 9.8 {
-            // y is vertical
-            y_change = 9.8;
-            x_change = 0;
-            z_change = 0;
-        }
-    }
-    else {
-        // z is vertical
-        z_change = 9.8;
-        x_change = 0;
-        y_change = 0;
-    }
-    if (abs(x) - x_change > threshold || abs(y) - y_change > threshold || abs(z)- z_change > threshold) {
+    magnitude = sqrt(x*x + y*y + z*z);
+    if (abs(magnitude - 9.8) > threshold) {
         // Movement detected, return true
         return true;
     } else {
