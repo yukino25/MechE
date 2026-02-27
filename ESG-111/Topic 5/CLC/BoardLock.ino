@@ -48,6 +48,12 @@ byte storedKey[16];
 byte dataBlock[16];
 byte buffer[18];
 
+//TODO add:
+//! function to toggle between autolock when not in motion and manual lock. alarm doesnt set for 10 seconds after locking to allow user to move board to desired location before movement detection starts
+//! write out the alarm code, alarm goes while movement is detected, stops after 10 seconds of no movement, and restarts if movement is detected again after that
+
+
+
 void setup() {
   Serial.begin(9600);
   CircuitPlayground.begin();
