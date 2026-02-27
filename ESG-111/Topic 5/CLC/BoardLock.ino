@@ -22,13 +22,31 @@ CPX toggle switch between read and write mode for RFID
 #define MOSI_PIN A7
 #define MISO_PIN A5
 
+//*Timing constants
+#define HOLD_DURATION  2000UL   // ms card must be held continuously to toggle mode (vs tap to lock)
+#define LOCK_GRACE_MS 10000UL   // ms after locking before alarm can activate
+#define ALARM_STOP_MS 10000UL   // ms of no movement before alarm silences itself
+#define AUTO_LOCK_MS  10000UL   // ms of no movement before auto-lock engages
 
 //*Variables
 //accelerometer variables
 float x, y, z;
 float threshold = 1.5; //threshold for movement detection
 //lock state variable, toggle when correct RFID tag is detected, controls whether movement detection and buzzer are active
-bool lock = false; 
+bool lock = false;
+
+// Operating mode: false = manual (tap to lock/unlock), true = auto (lock when no movement)
+bool autoLockMode = false;
+
+// Alarm / auto-lock timing
+unsigned long lastMovementTime = 0;  // last millis() movement was detected (unlocked, auto mode)
+unsigned long lockGraceEnd    = 0;   // alarm won't activate until after this timestamp
+bool          alarmSounding   = false;
+unsigned long noMovementSince = 0;   // when continuous no-movement started (while alarm is on)
+
+// Card tap-vs-hold detection state
+bool          cardPending      = false;
+unsigned long cardDetectedTime = 0;
 
 
 
@@ -47,10 +65,6 @@ MFRC522::MIFARE_Key key;
 byte storedKey[16];
 byte dataBlock[16];
 byte buffer[18];
-
-//TODO add:
-//! function to toggle between autolock when not in motion and manual lock. alarm doesnt set for 10 seconds after locking to allow user to move board to desired location before movement detection starts
-//! write out the alarm code, alarm goes while movement is detected, stops after 10 seconds of no movement, and restarts if movement is detected again after that
 
 
 
@@ -236,32 +250,25 @@ void RFID_WRITE() {
 
 
 
-//? function to read data from RFID, control buzzer and detect movement when toggle switch is in read mode
+//? main run loop: card handling, alarm, and auto-lock
 void RUN(){
-    // only care about movement if lock is active
-    if(lock){
-        //* read from RFID, compare to stored key
+    // Resolve any pending card tap/hold interaction
+    CHECK_CARD_HOLD();
+
+    // Only scan for a new card when no interaction is already in progress
+    if (!cardPending) {
         RFID_READ();
-        // needs to either detect a card for function or detect movement
-        x = CircuitPlayground.motionX();
-        y = CircuitPlayground.motionY();
-        z = CircuitPlayground.motionZ();
-        MOVEMENT_DETECT();
-
-        // if movement is detected
-        if (MOVEMENT_DETECT()) {
-
-        }
-        //if movement isnt detected
-        else if(!MOVEMENT_DETECT()){
-
-        }
     }
-    
-    else if (!lock){
-        //* read from RFID, compare to stored key
-        RFID_READ();
 
+    // Read accelerometer once per loop iteration
+    x = CircuitPlayground.motionX();
+    y = CircuitPlayground.motionY();
+    z = CircuitPlayground.motionZ();
+
+    if (lock) {
+        ALARM_UPDATE();
+    } else {
+        AUTO_LOCK_CHECK();
     }
 }
 
@@ -274,6 +281,121 @@ bool MOVEMENT_DETECT(){
     } else {
         // No movement, return false
       return false;
+    }
+}
+
+
+//? determine whether a valid card scan was a short tap (toggle lock) or a 2-second hold (toggle mode)
+//?   - tap  < HOLD_DURATION : toggle lock state
+//?   - hold >= HOLD_DURATION: toggle operating mode (auto / manual), play 2 or 3 beeps
+void CHECK_CARD_HOLD() {
+    if (!cardPending) return;
+
+    unsigned long elapsed = millis() - cardDetectedTime;
+
+    // PICC_WakeupA sends WUPA, wakes halted cards
+    byte bufferATQA[2];
+    byte bufferSize = sizeof(bufferATQA);
+    MFRC522::StatusCode result = mfrc522.PICC_WakeupA(bufferATQA, &bufferSize);
+
+    if (result == MFRC522::STATUS_OK) {
+        // Card is still present — re-select then re-halt to reset its RF state
+        if (mfrc522.PICC_ReadCardSerial()) {
+            mfrc522.PICC_HaltA();
+            mfrc522.PCD_StopCrypto1();
+        }
+
+        if (elapsed >= HOLD_DURATION) {
+            // 2-second hold confirmed: toggle operating mode
+            cardPending   = false;
+            autoLockMode  = !autoLockMode;
+            //number of beeps based on mode: 2 for auto, 3 for manual
+            int beepCount = autoLockMode ? 2 : 3;
+            for (int i = 0; i < beepCount; i++) {
+                tone(BUZZER_PIN, 1000, 150);
+                delay(250);
+            }
+            Serial.println(autoLockMode ? F("Mode: AUTO (no-motion lock)") : F("Mode: MANUAL (tap to lock)"));
+        }
+        // else: still under 2 seconds — keep waiting
+
+    } else {
+        // Card is not present
+        cardPending = false;
+
+        if (elapsed < HOLD_DURATION) {
+            // Short tap: toggle lock state
+            lock = !lock;
+            if (lock) {
+                lockGraceEnd  = millis() + LOCK_GRACE_MS;
+                noMovementSince = 0;
+                alarmSounding   = false;
+                Serial.println(F("LOCKED"));
+            } else {
+                if (alarmSounding) {
+                    noTone(BUZZER_PIN);
+                    alarmSounding = false;
+                }
+                lastMovementTime = 0;
+                Serial.println(F("UNLOCKED"));
+            }
+        } else {
+            // Card was held long enough but left before the next CHECK_CARD_HOLD poll — still toggle mode
+            autoLockMode  = !autoLockMode;
+            int beepCount = autoLockMode ? 2 : 3;
+            for (int i = 0; i < beepCount; i++) {
+                tone(BUZZER_PIN, 1000, 150);
+                delay(250);
+            }
+            Serial.println(autoLockMode ? F("Mode: AUTO (no-motion lock)") : F("Mode: MANUAL (tap to lock)"));
+        }
+    }
+}
+
+
+//? manage alarm while board is locked:
+//?   - alarm starts when movement is detected (after grace period)
+//?   - alarm silences after ALARM_STOP_MS of no movement
+//?   - alarm restarts if movement is detected again
+void ALARM_UPDATE() {
+    // Grace period after locking: gives user time to set the board down without triggering alarm
+    if (millis() < lockGraceEnd) return;
+
+    if (MOVEMENT_DETECT()) {
+        noMovementSince = 0;
+        if (!alarmSounding) {
+            alarmSounding = true;
+            tone(BUZZER_PIN, 2000);   // continuous tone until noTone() is called
+        }
+    } else {
+        if (alarmSounding) {
+            if (noMovementSince == 0) {
+                noMovementSince = millis();
+            }
+            if (millis() - noMovementSince >= ALARM_STOP_MS) {
+                // 10 seconds of no movement: silence alarm
+                alarmSounding   = false;
+                noMovementSince = 0;
+                noTone(BUZZER_PIN);
+            }
+        }
+    }
+}
+
+
+//? auto-lock after AUTO_LOCK_MS of no movement (auto mode only, board must be unlocked)
+void AUTO_LOCK_CHECK() {
+    if (!autoLockMode) return;
+
+    if (MOVEMENT_DETECT()) {
+        lastMovementTime = millis();
+    } else if (lastMovementTime > 0 && millis() - lastMovementTime >= AUTO_LOCK_MS) {
+        lock            = true;
+        lockGraceEnd    = millis() + LOCK_GRACE_MS;
+        lastMovementTime = 0;
+        noMovementSince  = 0;
+        alarmSounding    = false;
+        Serial.println(F("AUTO LOCKED: no motion detected"));
     }
 }
 
@@ -323,8 +445,10 @@ void RFID_READ() {
     }
     Serial.print(F("Number of bytes that match = ")); Serial.println(count);
     if (count == 16) {
-        lock = !lock;
-        Serial.println(F("key match, lock state toggled"));
+        // Valid card: halt it and start the tap/hold timer
+        cardPending      = true;
+        cardDetectedTime = millis();
+        Serial.println(F("Valid card — timing tap vs hold..."));
     } else {
         Serial.println(F("key mismatch, lock state unchanged"));
     }
