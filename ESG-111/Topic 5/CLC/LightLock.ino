@@ -86,19 +86,20 @@ void loop(){
 
 
 
-/*function to write data to RFID tag when toggle switch is in write mode
-function taken from example code provided by library, modified to fit specific requirements
-used in production to create unique key for board*/
+//? function to write data to RFID tag when toggle switch is in write mode
+//? function taken from example code provided by library, modified to fit specific requirements
+//? used in production to create unique key for board
 void RFID_WRITE() {
     // Reset the loop if no new card present on the sensor/reader. This saves the entire process when idle.
-    if ( ! mfrc522.PICC_IsNewCardPresent())
+    if ( ! mfrc522.PICC_IsNewCardPresent()){
         return;
+    }
 
     // Select one of the cards
-    if ( ! mfrc522.PICC_ReadCardSerial())
+    if ( ! mfrc522.PICC_ReadCardSerial()){
         return;
-
-    // Show some details of the PICC (that is: the tag/card)
+    }
+    // Show some details of the PICC (tag/card)
     Serial.print(F("Card UID:"));
     dump_byte_array(mfrc522.uid.uidByte, mfrc522.uid.size);
     Serial.println();
@@ -110,7 +111,7 @@ void RFID_WRITE() {
     if (    piccType != MFRC522::PICC_TYPE_MIFARE_MINI
         &&  piccType != MFRC522::PICC_TYPE_MIFARE_1K
         &&  piccType != MFRC522::PICC_TYPE_MIFARE_4K) {
-        Serial.println(F("This sample only works with MIFARE Classic cards."));
+        //only works with MIFARE Classic cards
         return;
     }
 
@@ -126,7 +127,7 @@ void RFID_WRITE() {
     }
     memcpy(storedKey, dataBlock, 16);
 
-    // Save to flash so the key survives power cycles
+    //* Save to flash so the key survives power cycles
     KeyStorage ks;
     ks.valid = true;
     memcpy(ks.data, storedKey, 16);
@@ -197,21 +198,20 @@ void RFID_WRITE() {
     Serial.print(F("Data in block ")); Serial.print(blockAddr); Serial.println(F(":"));
     dump_byte_array(buffer, 16); Serial.println();
 
-    // Check that data in block is what we have written
-    // by counting the number of bytes that are equal
+    //* Check that data in block is what was have written by counting the number of bytes that are equal
     Serial.println(F("Checking result..."));
     byte count = 0;
     for (byte i = 0; i < 16; i++) {
-        // Compare buffer (= what we've read) with dataBlock (= what we've written)
-        if (buffer[i] == dataBlock[i])
+        // Compare buffer (= what was read) with dataBlock (= what was written)
+        if (buffer[i] == dataBlock[i]){
             count++;
+        }
     }
     Serial.print(F("Number of bytes that match = ")); Serial.println(count);
     if (count == 16) {
-        Serial.println(F("Success :-)"));
+        Serial.println(F("Success"));
     } else {
-        Serial.println(F("Failure, no match :-("));
-        Serial.println(F("  perhaps the write didn't work properly..."));
+        Serial.println(F("Failure, no match"));
     }
     Serial.println();
 
@@ -229,17 +229,19 @@ void RFID_WRITE() {
 
 
 
-//function to read data from RFID, control buzzer and detect movement when toggle switch is in read mode
+//? function to read data from RFID, control buzzer and detect movement when toggle switch is in read mode
 void RUN(){
-    //only care about movement if lock is active
+    // only care about movement if lock is active
     if(lock){
+        //* read from RFID, compare to stored key
         RFID_READ();
         // needs to either detect a card for function or detect movement
         x = CircuitPlayground.motionX();
         y = CircuitPlayground.motionY();
         z = CircuitPlayground.motionZ();
         MOVEMENT_DETECT();
-        //if movement is detected
+
+        // if movement is detected
         if (MOVEMENT_DETECT()) {
 
         }
@@ -248,13 +250,16 @@ void RUN(){
 
         }
     }
+    
     else if (!lock){
+        //* read from RFID, compare to stored key
         RFID_READ();
+
     }
 }
 
 
-//detect movement using accelerometer
+//? detect movement using accelerometer
 bool MOVEMENT_DETECT(){
     if (abs(x) > threshold || abs(y) > threshold || abs(z) > threshold) {
         // Movement detected, return true
@@ -266,17 +271,30 @@ bool MOVEMENT_DETECT(){
 }
 
 
-//read data from RFID to enable/disable "lock state" of board, control buzzer based on lock state
+//? read data from RFID to enable/disable "lock state" of board, control buzzer based on lock state
 void RFID_READ() {
     // Reset the loop if no new card present on the sensor/reader. This saves the entire process when idle.
     if ( ! mfrc522.PICC_IsNewCardPresent()){
         return;
     }
 
-
     // compare the RFID key read with the stored key, if they match toggle lock state
     if ( ! mfrc522.PICC_ReadCardSerial()){
-        return;
+            byte count = 0;
+        for (byte i = 0; i < 16; i++) {
+        // Compare buffer (= what was read) with dataBlock (= what was written)
+            if (buffer[i] == dataBlock[i]){
+                count++;
+            }
+        }
+        Serial.print(F("Number of bytes that match = ")); Serial.println(count);
+        if (count == 16) {
+            //if the correct key is read, toggle lock state
+            lock = !lock;
+            Serial.println(F("key match, lock state toggled"));
+        } else {
+            Serial.println(F("key mismatch, lock state unchanged"));
+        }
     }
 }
 
