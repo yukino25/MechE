@@ -45,6 +45,7 @@ MFRC522::MIFARE_Key key;
 
 // Stores the last randomly written key so RUN() can verify against it
 byte storedKey[16];
+byte dataBlock[16];
 byte buffer[18];
 
 void setup() {
@@ -279,24 +280,51 @@ void RFID_READ() {
         return;
     }
 
-    // compare the RFID key read with the stored key, if they match toggle lock state
     if ( ! mfrc522.PICC_ReadCardSerial()){
-            byte count = 0;
-        for (byte i = 0; i < 16; i++) {
-        // Compare buffer (= what was read) with dataBlock (= what was written)
-            if (buffer[i] == dataBlock[i]){
-                count++;
-            }
-        }
-        Serial.print(F("Number of bytes that match = ")); Serial.println(count);
-        if (count == 16) {
-            //if the correct key is read, toggle lock state
-            lock = !lock;
-            Serial.println(F("key match, lock state toggled"));
-        } else {
-            Serial.println(F("key mismatch, lock state unchanged"));
+        return;
+    }
+
+    // Authenticate and read block 4 into buffer, then compare to stored key
+    byte trailerBlock = 7;
+    byte blockAddr    = 4;
+    byte size         = sizeof(buffer);
+    MFRC522::StatusCode status;
+
+    status = (MFRC522::StatusCode) mfrc522.PCD_Authenticate(MFRC522::PICC_CMD_MF_AUTH_KEY_A, trailerBlock, &key, &(mfrc522.uid));
+    if (status != MFRC522::STATUS_OK) {
+        Serial.print(F("PCD_Authenticate() failed: "));
+        Serial.println(mfrc522.GetStatusCodeName(status));
+        mfrc522.PICC_HaltA();
+        mfrc522.PCD_StopCrypto1();
+        return;
+    }
+
+    status = (MFRC522::StatusCode) mfrc522.MIFARE_Read(blockAddr, buffer, &size);
+    if (status != MFRC522::STATUS_OK) {
+        Serial.print(F("MIFARE_Read() failed: "));
+        Serial.println(mfrc522.GetStatusCodeName(status));
+        mfrc522.PICC_HaltA();
+        mfrc522.PCD_StopCrypto1();
+        return;
+    }
+
+    // Compare buffer (what was read) with storedKey (what was written)
+    byte count = 0;
+    for (byte i = 0; i < 16; i++) {
+        if (buffer[i] == storedKey[i]) {
+            count++;
         }
     }
+    Serial.print(F("Number of bytes that match = ")); Serial.println(count);
+    if (count == 16) {
+        lock = !lock;
+        Serial.println(F("key match, lock state toggled"));
+    } else {
+        Serial.println(F("key mismatch, lock state unchanged"));
+    }
+
+    mfrc522.PICC_HaltA();
+    mfrc522.PCD_StopCrypto1();
 }
 
 
