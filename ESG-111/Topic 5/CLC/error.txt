@@ -11,4 +11,4 @@ Scan a MIFARE Classic PICC to demonstrate read and write.
 Using key (for A and B): FF FF FF FF FF FF
 BEWARE: Data will be written to the PICC, in sector #1
  = (unknown)
-WARNING: Communication failure, is the MFRC522 properly connected?
+WARNING: Communication failure, is the MFRC522 properly connected
