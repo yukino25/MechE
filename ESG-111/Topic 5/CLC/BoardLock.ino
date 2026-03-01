@@ -9,6 +9,7 @@ CPX toggle switch between read and write mode for RFID
 //*Libraries
 #include <Adafruit_CircuitPlayground.h>
 #include <SPI.h>
+#include "wiring_private.h"  // pinPeripheral() + sercom0 for custom SPI
 #include <MFRC522v2.h>
 #include <MFRC522DriverSPI.h>
 #include <MFRC522DriverPinSimple.h>
@@ -20,11 +21,12 @@ CPX toggle switch between read and write mode for RFID
 //*Pin numbers
 #define RFID_MODE 7
 #define BUZZER_PIN A0
-#define RST_PIN A3
-#define SS_PIN A2
-#define SCK_PIN A1
-#define MOSI_PIN A7
-#define MISO_PIN A6
+// Hardware SPI on SERCOM0 — the only valid external SPI interface on CPX edge pads
+// Default SPI uses SERCOM3 (internal flash), so a custom SPIClass is required
+#define SS_PIN   A7  // chip select: any free GPIO (A6/A7 are PORTB UART pads, fine as GPIO)
+#define SCK_PIN  A1  // SERCOM0/PAD1 (PA05)
+#define MOSI_PIN A3  // SERCOM0/PAD3 (PA07)
+#define MISO_PIN A2  // SERCOM0/PAD2 (PA06)
 
 //*Timing constants
 #define HOLD_DURATION  2000UL   // ms card must be held continuously to toggle mode (vs tap to lock)
@@ -62,11 +64,14 @@ typedef struct {
 } KeyStorage;
 FlashStorage(key_storage, KeyStorage);
 
-// Create MFRC522 instance using v2 SPI driver pattern
-// RST is handled internally via software reset in v2 (no pin needed)
-// SCK/MOSI/MISO are the hardware SPI pads on the CPX (A1/A7/A6) handled by SPI class
+// Custom SPI on SERCOM0 using CPX edge pads A1(SCK)/A3(MOSI)/A2(MISO)
+// Constructor: SPIClass(sercom, miso_pin, sck_pin, mosi_pin, tx_pad, rx_pad)
+// SPI_PAD_3_SCK_1 → MOSI=PAD3(A3), SCK=PAD1(A1) | SERCOM_RX_PAD_2 → MISO=PAD2(A2)
+SPIClass rfidSPI(&sercom0, MISO_PIN, SCK_PIN, MOSI_PIN, SPI_PAD_3_SCK_1, SERCOM_RX_PAD_2);
+
+// Create MFRC522 instance using v2 SPI driver pattern (RST handled via software reset)
 MFRC522DriverPinSimple ss_pin(SS_PIN);
-MFRC522DriverSPI driver{ss_pin};
+MFRC522DriverSPI driver{ss_pin, rfidSPI};
 MFRC522 mfrc522{driver};
 MFRC522::MIFARE_Key key;
 
@@ -84,11 +89,14 @@ void setup() {
   pinMode(RFID_MODE, INPUT);
   pinMode(BUZZER_PIN, OUTPUT);
 
-  // Random number generator using floating analog pins and micros
-  randomSeed(analogRead(A3) ^ (analogRead(A4) << 8) ^ micros());
+  // Random number generator (A6/A5 used here; A3 becomes MOSI after rfidSPI.begin())
+  randomSeed(analogRead(A6) ^ (analogRead(A5) << 8) ^ micros());
 
-  // Initialize RFID reader
-  SPI.begin();
+  // Initialize RFID reader on SERCOM0 (A1=SCK, A2=MISO, A3=MOSI, A7=SS)
+  rfidSPI.begin();
+  pinPeripheral(SCK_PIN,  PIO_SERCOM);
+  pinPeripheral(MOSI_PIN, PIO_SERCOM);
+  pinPeripheral(MISO_PIN, PIO_SERCOM);
   mfrc522.PCD_Init();
     RFID_PREP();
     MFRC522Debug::PCD_DumpVersionToSerial(mfrc522, Serial);
