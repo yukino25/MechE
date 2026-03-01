@@ -71,10 +71,10 @@ FlashStorage(key_storage, KeyStorage);
 SPIClass rfidSPI(&sercom0, MISO_PIN, SCK_PIN, MOSI_PIN, SPI_PAD_3_SCK_1, SERCOM_RX_PAD_2);
 
 // Create MFRC522 instance using v2 SPI driver pattern (RST handled via software reset)
-// Explicit SPISettings needed: SAMD SPI_CLOCK_DIV4=12 is a raw divider, not Hz —
-// passing it as a frequency to SPISettings causes BAUD register overflow → garbled clock.
+// 100 kHz: raw SPI test shows RC522 responds at 100kHz but not 2MHz — wiring capacitance
+// on CPX alligator-clip connections corrupts signals at higher speeds.
 MFRC522DriverPinSimple ss_pin(SS_PIN);
-MFRC522DriverSPI driver{ss_pin, rfidSPI, SPISettings(2000000, MSBFIRST, SPI_MODE0)};
+MFRC522DriverSPI driver{ss_pin, rfidSPI, SPISettings(100000, MSBFIRST, SPI_MODE0)};
 MFRC522 mfrc522{driver};
 MFRC522::MIFARE_Key key;
 
@@ -121,7 +121,7 @@ void setup() {
   PORT->Group[PORTA].PMUX[3].reg    = 0x33;  // PA06 even=0x3 (SERCOM0/PAD2), PA07 odd=0x3 (SERCOM0/PAD3)
   // Force SERCOM0 hardware config to run at 2 MHz before PCD_Init touches the bus.
   // Without this, Adafruit SAMD may skip initSPI() if the stored clock == default clock.
-  rfidSPI.beginTransaction(SPISettings(2000000, MSBFIRST, SPI_MODE0));
+  rfidSPI.beginTransaction(SPISettings(100000, MSBFIRST, SPI_MODE0));
   rfidSPI.endTransaction();
 
   // --- REGISTER DIAGNOSTICS (remove once working) ---
