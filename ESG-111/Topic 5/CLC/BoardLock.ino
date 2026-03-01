@@ -145,8 +145,13 @@ void setup() {
   Serial.print(F("  PINCFG7=0x")); Serial.println(PORT->Group[PORTA].PINCFG[7].reg, HEX);
   // SERCOM0 CTRLA bit1 = ENABLE; if 0 the SPI hardware block is not running
   Serial.print(F("SERCOM0_CTRLA=0x")); Serial.println(SERCOM0->SPI.CTRLA.reg, HEX);
-  // SS pin state: should be HIGH (1) between transactions
-  Serial.print(F("SS_PIN digitalRead=")); Serial.println(digitalRead(SS_PIN));
+  // SS toggle test: confirm A7 can actually drive LOW
+  digitalWrite(SS_PIN, LOW);
+  delay(1);
+  Serial.print(F("SS LOW test=")); Serial.println(digitalRead(SS_PIN));  // must be 0
+  digitalWrite(SS_PIN, HIGH);
+  delay(1);
+  Serial.print(F("SS HIGH test=")); Serial.println(digitalRead(SS_PIN)); // must be 1
   // --- END DIAGNOSTICS ---
 
   mfrc522.PCD_Init();
