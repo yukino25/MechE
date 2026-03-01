@@ -6,6 +6,7 @@ PINCFG5=0x43  PINCFG6=0x3  PINCFG7=0x43
 SERCOM0_CTRLA=0x22000E
 SS LOW test=0
 SS HIGH test=1
+VersionReg@100kHz=0x82
 Scan a MIFARE Classic PICC to demonstrate read and write.
 Using key (for A and B): FF FF FF FF FF FF
 BEWARE: Data will be written to the PICC, in sector #1
