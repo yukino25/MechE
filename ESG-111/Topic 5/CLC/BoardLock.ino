@@ -154,19 +154,36 @@ void setup() {
   Serial.print(F("SS HIGH test=")); Serial.println(digitalRead(SS_PIN)); // must be 1
   // --- END DIAGNOSTICS ---
 
-  // Raw SPI read of RC522 VersionReg at 100 kHz — bypasses library to prove hardware responds.
-  // RC522 SPI format: bit7=RW(1=read), bits6:1=address, bit0=0
-  // VersionReg address = 0x37 → SPI byte = (0x37<<1)|0x80 = 0xEE
-  // Expected: 0x91 (v1.0), 0x92 (v2.0), 0x88 (clone). 0x00 or 0xFF = no response.
+  // Write-read test: write 0xAA to ModWidthReg then read it back.
+  // ModWidthReg addr=0x24, shifted: write byte=0x48, read byte=0xC8.
+  // Result: 0xAA = SPI working; 0x26 = write failed (default); 0x00/0xFF = no response.
   rfidSPI.beginTransaction(SPISettings(100000, MSBFIRST, SPI_MODE0));
-  digitalWrite(SS_PIN, LOW);
-  delayMicroseconds(20);
-  rfidSPI.transfer(0xEE);
-  byte rawVer = rfidSPI.transfer(0x00);
-  delayMicroseconds(20);
-  digitalWrite(SS_PIN, HIGH);
+  digitalWrite(SS_PIN, LOW); delayMicroseconds(20);
+  rfidSPI.transfer(0x48); rfidSPI.transfer(0xAA);  // write 0xAA to ModWidthReg
+  delayMicroseconds(20); digitalWrite(SS_PIN, HIGH);
   rfidSPI.endTransaction();
-  Serial.print(F("VersionReg@100kHz=0x")); Serial.println(rawVer, HEX);
+  delay(2);
+  rfidSPI.beginTransaction(SPISettings(100000, MSBFIRST, SPI_MODE0));
+  digitalWrite(SS_PIN, LOW); delayMicroseconds(20);
+  rfidSPI.transfer(0xC8);                          // read ModWidthReg
+  byte rwTest = rfidSPI.transfer(0x00);
+  delayMicroseconds(20); digitalWrite(SS_PIN, HIGH);
+  rfidSPI.endTransaction();
+  Serial.print(F("ModWidth write=0xAA readback=0x")); Serial.println(rwTest, HEX);
+
+  // VersionReg repeated 4x — consistent value = real response, varying = floating MISO
+  Serial.print(F("VersionReg x4: "));
+  for (byte n = 0; n < 4; n++) {
+    rfidSPI.beginTransaction(SPISettings(100000, MSBFIRST, SPI_MODE0));
+    digitalWrite(SS_PIN, LOW); delayMicroseconds(20);
+    rfidSPI.transfer(0xEE);                        // VersionReg read byte
+    byte v = rfidSPI.transfer(0x00);
+    delayMicroseconds(20); digitalWrite(SS_PIN, HIGH);
+    rfidSPI.endTransaction();
+    delay(2);
+    Serial.print(F("0x")); Serial.print(v, HEX); Serial.print(' ');
+  }
+  Serial.println();
 
   mfrc522.PCD_Init();
   RFID_PREP();
