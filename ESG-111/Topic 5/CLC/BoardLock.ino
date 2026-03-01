@@ -10,6 +10,9 @@ CPX toggle switch between read and write mode for RFID
 #include <Adafruit_CircuitPlayground.h>
 #include <SPI.h>
 #include <MFRC522v2.h>
+#include <MFRC522DriverSPI.h>
+#include <MFRC522DriverPinSimple.h>
+#include <MFRC522Debug.h>
 //nonvolatile memory library to store the last randomly generated key
 #include <FlashStorage.h>
 
@@ -59,8 +62,12 @@ typedef struct {
 } KeyStorage;
 FlashStorage(key_storage, KeyStorage);
 
-// Create MFRC522 instance
-MFRC522 mfrc522(SS_PIN, RST_PIN, SCK_PIN, MOSI_PIN, MISO_PIN);
+// Create MFRC522 instance using v2 SPI driver pattern
+// RST is handled internally via software reset in v2 (no pin needed)
+// SCK/MOSI/MISO are the hardware SPI pads on the CPX (A1/A7/A6) handled by SPI class
+MFRC522DriverPinSimple ss_pin(SS_PIN);
+MFRC522DriverSPI driver{ss_pin};
+MFRC522 mfrc522{driver};
 MFRC522::MIFARE_Key key;
 
 // Stores the last randomly written key so RUN() can verify against it
@@ -84,7 +91,7 @@ void setup() {
   SPI.begin();
   mfrc522.PCD_Init();
     RFID_PREP();
-    mfrc522.PCD_DumpVersionToSerial();
+    MFRC522Debug::PCD_DumpVersionToSerial(mfrc522, Serial);
   // Load key from flash if one has been written before
   KeyStorage ks = key_storage.read();
   if (ks.valid) {
@@ -129,7 +136,7 @@ void RFID_WRITE() {
     Serial.println();
     Serial.print(F("PICC type: "));
     MFRC522::PICC_Type piccType = mfrc522.PICC_GetType(mfrc522.uid.sak);
-    Serial.println(mfrc522.PICC_GetTypeName(piccType));
+    Serial.println(MFRC522Debug::PICC_GetTypeName(piccType));
 
     // Check for compatibility
     if (    piccType != MFRC522::PICC_TYPE_MIFARE_MINI
@@ -170,13 +177,13 @@ void RFID_WRITE() {
     status = (MFRC522::StatusCode) mfrc522.PCD_Authenticate(MFRC522::PICC_CMD_MF_AUTH_KEY_A, trailerBlock, &key, &(mfrc522.uid));
     if (status != MFRC522::STATUS_OK) {
         Serial.print(F("PCD_Authenticate() failed: "));
-        Serial.println(mfrc522.GetStatusCodeName(status));
+        Serial.println(MFRC522Debug::GetStatusCodeName(status));
         return;
     }
 
     // Show the whole sector as it currently is
     Serial.println(F("Current data in sector:"));
-    mfrc522.PICC_DumpMifareClassicSectorToSerial(&(mfrc522.uid), &key, sector);
+    MFRC522Debug::PICC_DumpMifareClassicSectorToSerial(mfrc522, &key, sector, Serial);
     Serial.println();
 
     // Read data from the block
@@ -185,7 +192,7 @@ void RFID_WRITE() {
     status = (MFRC522::StatusCode) mfrc522.MIFARE_Read(blockAddr, buffer, &size);
     if (status != MFRC522::STATUS_OK) {
         Serial.print(F("MIFARE_Read() failed: "));
-        Serial.println(mfrc522.GetStatusCodeName(status));
+        Serial.println(MFRC522Debug::GetStatusCodeName(status));
     }
     Serial.print(F("Data in block ")); Serial.print(blockAddr); Serial.println(F(":"));
     dump_byte_array(buffer, 16); Serial.println();
@@ -196,7 +203,7 @@ void RFID_WRITE() {
     status = (MFRC522::StatusCode) mfrc522.PCD_Authenticate(MFRC522::PICC_CMD_MF_AUTH_KEY_B, trailerBlock, &key, &(mfrc522.uid));
     if (status != MFRC522::STATUS_OK) {
         Serial.print(F("PCD_Authenticate() failed: "));
-        Serial.println(mfrc522.GetStatusCodeName(status));
+        Serial.println(MFRC522Debug::GetStatusCodeName(status));
         return;
     }
 
@@ -207,7 +214,7 @@ void RFID_WRITE() {
     status = (MFRC522::StatusCode) mfrc522.MIFARE_Write(blockAddr, dataBlock, 16);
     if (status != MFRC522::STATUS_OK) {
         Serial.print(F("MIFARE_Write() failed: "));
-        Serial.println(mfrc522.GetStatusCodeName(status));
+        Serial.println(MFRC522Debug::GetStatusCodeName(status));
     }
     Serial.println();
 
@@ -217,7 +224,7 @@ void RFID_WRITE() {
     status = (MFRC522::StatusCode) mfrc522.MIFARE_Read(blockAddr, buffer, &size);
     if (status != MFRC522::STATUS_OK) {
         Serial.print(F("MIFARE_Read() failed: "));
-        Serial.println(mfrc522.GetStatusCodeName(status));
+        Serial.println(MFRC522Debug::GetStatusCodeName(status));
     }
     Serial.print(F("Data in block ")); Serial.print(blockAddr); Serial.println(F(":"));
     dump_byte_array(buffer, 16); Serial.println();
@@ -241,7 +248,7 @@ void RFID_WRITE() {
 
     // Dump the sector data
     Serial.println(F("Current data in sector:"));
-    mfrc522.PICC_DumpMifareClassicSectorToSerial(&(mfrc522.uid), &key, sector);
+    MFRC522Debug::PICC_DumpMifareClassicSectorToSerial(mfrc522, &key, sector, Serial);
     Serial.println();
 
     // Halt PICC
@@ -429,7 +436,7 @@ void RFID_READ() {
     status = (MFRC522::StatusCode) mfrc522.PCD_Authenticate(MFRC522::PICC_CMD_MF_AUTH_KEY_A, trailerBlock, &key, &(mfrc522.uid));
     if (status != MFRC522::STATUS_OK) {
         Serial.print(F("PCD_Authenticate() failed: "));
-        Serial.println(mfrc522.GetStatusCodeName(status));
+        Serial.println(MFRC522Debug::GetStatusCodeName(status));
         mfrc522.PICC_HaltA();
         mfrc522.PCD_StopCrypto1();
         return;
@@ -438,7 +445,7 @@ void RFID_READ() {
     status = (MFRC522::StatusCode) mfrc522.MIFARE_Read(blockAddr, buffer, &size);
     if (status != MFRC522::STATUS_OK) {
         Serial.print(F("MIFARE_Read() failed: "));
-        Serial.println(mfrc522.GetStatusCodeName(status));
+        Serial.println(MFRC522Debug::GetStatusCodeName(status));
         mfrc522.PICC_HaltA();
         mfrc522.PCD_StopCrypto1();
         return;
