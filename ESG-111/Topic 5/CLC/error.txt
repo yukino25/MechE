@@ -1,3 +1,7 @@
+PMUX[2]=0x30  PMUX[3]=0x33
+PINCFG5=0x43  PINCFG6=0x3  PINCFG7=0x43
+SERCOM0_CTRLA=0x22000E
+SS_PIN digitalRead=1
 Scan a MIFARE Classic PICC to demonstrate read and write.
 Using key (for A and B): FF FF FF FF FF FF
 BEWARE: Data will be written to the PICC, in sector #1
