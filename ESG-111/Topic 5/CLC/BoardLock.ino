@@ -9,7 +9,7 @@ CPX toggle switch between read and write mode for RFID
 //*Libraries
 #include <Adafruit_CircuitPlayground.h>
 #include <SPI.h>
-#include <MFRC522.h>
+#include <MFRC522v2.h>
 //nonvolatile memory library to store the last randomly generated key
 #include <FlashStorage.h>
 
@@ -17,11 +17,11 @@ CPX toggle switch between read and write mode for RFID
 //*Pin numbers
 #define RFID_MODE 7
 #define BUZZER_PIN A0
-#define RST_PIN A2
-#define SS_PIN A1
-#define SCK_PIN A6
+#define RST_PIN A3
+#define SS_PIN A2
+#define SCK_PIN A1
 #define MOSI_PIN A7
-#define MISO_PIN A5
+#define MISO_PIN A6
 
 //*Timing constants
 #define HOLD_DURATION  2000UL   // ms card must be held continuously to toggle mode (vs tap to lock)
@@ -35,7 +35,7 @@ float x, y, z;
 const float threshold = 1.5; //threshold for movement detection
 //lock state variable, toggle when correct RFID tag is detected, controls whether movement detection and buzzer are active
 bool lock = false;
-
+bool readmode;
 // Operating mode: false = manual (tap to lock/unlock), true = auto (lock when no movement)
 bool autoLockMode = false;
 
@@ -60,7 +60,7 @@ typedef struct {
 FlashStorage(key_storage, KeyStorage);
 
 // Create MFRC522 instance
-MFRC522 mfrc522(SS_PIN, RST_PIN);
+MFRC522 mfrc522(SS_PIN, RST_PIN, SCK_PIN, MOSI_PIN, MISO_PIN);
 MFRC522::MIFARE_Key key;
 
 // Stores the last randomly written key so RUN() can verify against it
@@ -72,8 +72,9 @@ byte buffer[18];
 
 void setup() {
   Serial.begin(9600);
+  while (!Serial);
   CircuitPlayground.begin();
-  pinMode(RFID_MODE, INPUT_PULLUP);
+  pinMode(RFID_MODE, INPUT);
   pinMode(BUZZER_PIN, OUTPUT);
 
   // Random number generator using floating analog pins and micros
@@ -82,8 +83,8 @@ void setup() {
   // Initialize RFID reader
   SPI.begin();
   mfrc522.PCD_Init();
-  RFID_PREP();
-
+    RFID_PREP();
+    mfrc522.PCD_DumpVersionToSerial();
   // Load key from flash if one has been written before
   KeyStorage ks = key_storage.read();
   if (ks.valid) {
@@ -94,15 +95,15 @@ void setup() {
   }
 
   //read toggle switch state once at power up to set initial mode
-  digitalRead(RFID_MODE);
+  readmode = digitalRead(RFID_MODE);
 }
 
 void loop(){
 
-    if (RFID_MODE == HIGH) {
+    if (readmode) {
         RFID_WRITE();
     }
-    else {
+    else if (!readmode) {
         RUN();
     }
 }
@@ -477,6 +478,7 @@ void RFID_PREP(){
     Serial.println();
 
     Serial.println(F("BEWARE: Data will be written to the PICC, in sector #1"));
+
 }
 
 void dump_byte_array(byte *buffer, byte bufferSize) {
