@@ -71,8 +71,10 @@ FlashStorage(key_storage, KeyStorage);
 SPIClass rfidSPI(&sercom0, MISO_PIN, SCK_PIN, MOSI_PIN, SPI_PAD_3_SCK_1, SERCOM_RX_PAD_2);
 
 // Create MFRC522 instance using v2 SPI driver pattern (RST handled via software reset)
+// Explicit SPISettings needed: SAMD SPI_CLOCK_DIV4=12 is a raw divider, not Hz —
+// passing it as a frequency to SPISettings causes BAUD register overflow → garbled clock.
 MFRC522DriverPinSimple ss_pin(SS_PIN);
-MFRC522DriverSPI driver{ss_pin, rfidSPI};
+MFRC522DriverSPI driver{ss_pin, rfidSPI, SPISettings(2000000, MSBFIRST, SPI_MODE0)};
 MFRC522 mfrc522{driver};
 MFRC522::MIFARE_Key key;
 
