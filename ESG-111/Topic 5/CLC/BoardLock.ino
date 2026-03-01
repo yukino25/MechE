@@ -154,6 +154,20 @@ void setup() {
   Serial.print(F("SS HIGH test=")); Serial.println(digitalRead(SS_PIN)); // must be 1
   // --- END DIAGNOSTICS ---
 
+  // Raw SPI read of RC522 VersionReg at 100 kHz — bypasses library to prove hardware responds.
+  // RC522 SPI format: bit7=RW(1=read), bits6:1=address, bit0=0
+  // VersionReg address = 0x37 → SPI byte = (0x37<<1)|0x80 = 0xEE
+  // Expected: 0x91 (v1.0), 0x92 (v2.0), 0x88 (clone). 0x00 or 0xFF = no response.
+  rfidSPI.beginTransaction(SPISettings(100000, MSBFIRST, SPI_MODE0));
+  digitalWrite(SS_PIN, LOW);
+  delayMicroseconds(20);
+  rfidSPI.transfer(0xEE);
+  byte rawVer = rfidSPI.transfer(0x00);
+  delayMicroseconds(20);
+  digitalWrite(SS_PIN, HIGH);
+  rfidSPI.endTransaction();
+  Serial.print(F("VersionReg@100kHz=0x")); Serial.println(rawVer, HEX);
+
   mfrc522.PCD_Init();
   RFID_PREP();
   // Prints firmware version: 0x91/0x92 = good. 0x00 or 0xFF = SPI fault (check wiring).
