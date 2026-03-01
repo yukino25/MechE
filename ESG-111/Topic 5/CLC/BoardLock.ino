@@ -85,7 +85,9 @@ byte buffer[18];
 
 void setup() {
   Serial.begin(9600);
-  while (!Serial);
+  // Wait up to 3 s for serial monitor; continue anyway so RFID works standalone
+  unsigned long _t = millis();
+  while (!Serial && millis() - _t < 3000);
   CircuitPlayground.begin();
   pinMode(RFID_MODE, INPUT);
   pinMode(BUZZER_PIN, OUTPUT);
@@ -93,9 +95,11 @@ void setup() {
   // Random number generator (A6/A5 used here before RST_PIN is configured as OUTPUT)
   randomSeed(analogRead(A6) ^ (analogRead(A5) << 8) ^ micros());
 
-  // Drive RST HIGH to keep RC522 out of reset/power-down before SPI init
-  pinMode(RST_PIN, OUTPUT);
-  digitalWrite(RST_PIN, HIGH);
+  // Drive RST and SS to known-good states before the SPI bus is touched
+  // SS must be HIGH (deselected) before rfidSPI.begin() or the RC522 sees bus glitches
+  pinMode(SS_PIN,  OUTPUT); digitalWrite(SS_PIN,  HIGH);
+  pinMode(RST_PIN, OUTPUT); digitalWrite(RST_PIN, HIGH);
+  delay(50);  // RC522 needs ~50 ms after RST goes HIGH before SPI is valid
 
   // Initialize RFID reader on SERCOM0 (A1=SCK, A2=MISO, A3=MOSI, A7=SS)
   rfidSPI.begin();
@@ -103,8 +107,18 @@ void setup() {
   pinPeripheral(MOSI_PIN, PIO_SERCOM);
   pinPeripheral(MISO_PIN, PIO_SERCOM);
   mfrc522.PCD_Init();
-    RFID_PREP();
-    MFRC522Debug::PCD_DumpVersionToSerial(mfrc522, Serial);
+  RFID_PREP();
+  MFRC522Debug::PCD_DumpVersionToSerial(mfrc522, Serial);
+
+  // Sanity-check SPI: firmware version 0x91/0x92 = RC522 v1/v2.
+  // 0x00 or 0xFF means MISO is stuck (wiring or SERCOM config fault).
+  byte fwVer = mfrc522.PCD_ReadRegister(MFRC522Constants::VersionReg);
+  if (fwVer == 0x00 || fwVer == 0xFF) {
+    Serial.println(F("ERROR: RC522 not responding (SPI stuck). Check wiring/SERCOM."));
+  } else {
+    Serial.print(F("RC522 firmware version: 0x"));
+    Serial.println(fwVer, HEX);
+  }
   // Load key from flash if one has been written before
   KeyStorage ks = key_storage.read();
   if (ks.valid) {
