@@ -1,1 +1,11 @@
-https://adafruit.github.io/arduino-board-index/package_adafruit_index.json
+C:\Users\schlo\OneDrive\Documents\Arduino\esp32_txrx_test\esp32_txrx_test.ino: In function 'void setup()':
+C:\Users\schlo\OneDrive\Documents\Arduino\esp32_txrx_test\esp32_txrx_test.ino:115:24: error: 'class MFRC522' has no member named 'PCD_ReadRegister'; did you mean 'PCD_Register'?
+  115 |   byte fwVer = mfrc522.PCD_ReadRegister(MFRC522Constants::VersionReg);
+      |                        ^~~~~~~~~~~~~~~~
+      |                        PCD_Register
+Multiple libraries were found for "Adafruit_ZeroDMA.h"
+  Used: C:\Users\schlo\AppData\Local\Arduino15\packages\adafruit\hardware\samd\1.7.17\libraries\Adafruit_ZeroDMA
+  Not used: C:\Users\schlo\OneDrive\Documents\Arduino\libraries\Adafruit_Zero_DMA_Library
+exit status 1
+
+Compilation error: 'class MFRC522' has no member named 'PCD_ReadRegister'; did you mean 'PCD_Register'?
