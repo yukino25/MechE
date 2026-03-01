@@ -109,14 +109,16 @@ void setup() {
   // rfidSPI.begin() leaves them on PIO_ANALOG; pinPeripheral() relies on the Adafruit
   // variant library which may behave differently — write the PORT registers directly.
   //   PMUX[n] holds two pins: even pin in bits[3:0], odd pin in bits[7:4]
-  //   PA05 = odd  → PMUX[2] bits[7:4]; set to 0x2, preserve PA04 bits[3:0]
-  //   PA06 = even → PMUX[3] bits[3:0]; set to 0x2
-  //   PA07 = odd  → PMUX[3] bits[7:4]; set to 0x2
+  //   SERCOM0 for PA04-PA07 is on MUX column D (peripheral D = 0x3), NOT column C.
+  //   Column C on these pins is AC/AIN (Analog Comparator) — previous 0x2 was wrong.
+  //   PA05 = odd  → PMUX[2] bits[7:4]; set to 0x3, preserve PA04 bits[3:0]
+  //   PA06 = even → PMUX[3] bits[3:0]; set to 0x3
+  //   PA07 = odd  → PMUX[3] bits[7:4]; set to 0x3
   PORT->Group[PORTA].PINCFG[5].reg |= PORT_PINCFG_PMUXEN;
-  PORT->Group[PORTA].PMUX[2].reg    = (PORT->Group[PORTA].PMUX[2].reg & 0x0F) | 0x20;
+  PORT->Group[PORTA].PMUX[2].reg    = (PORT->Group[PORTA].PMUX[2].reg & 0x0F) | 0x30;
   PORT->Group[PORTA].PINCFG[6].reg  = PORT_PINCFG_PMUXEN | PORT_PINCFG_INEN; // INEN for MISO
   PORT->Group[PORTA].PINCFG[7].reg |= PORT_PINCFG_PMUXEN;
-  PORT->Group[PORTA].PMUX[3].reg    = 0x22;  // PA06 even=0x2, PA07 odd=0x2
+  PORT->Group[PORTA].PMUX[3].reg    = 0x33;  // PA06 even=0x3 (SERCOM0/PAD2), PA07 odd=0x3 (SERCOM0/PAD3)
   // Force SERCOM0 hardware config to run at 2 MHz before PCD_Init touches the bus.
   // Without this, Adafruit SAMD may skip initSPI() if the stored clock == default clock.
   rfidSPI.beginTransaction(SPISettings(2000000, MSBFIRST, SPI_MODE0));
