@@ -125,6 +125,17 @@ void setup() {
   rfidSPI.endTransaction();
 
   // --- REGISTER DIAGNOSTICS (remove once working) ---
+  // Verify A1/A2/A3 actually resolve to PA05/PA06/PA07 in this variant
+  // Expected: A1→PORT0 pin5, A2→PORT0 pin6, A3→PORT0 pin7
+  Serial.print(F("A1=D")); Serial.print((int)A1);
+  Serial.print(F(" PORT")); Serial.print(g_APinDescription[A1].ulPort);
+  Serial.print(F(" pin")); Serial.println(g_APinDescription[A1].ulPin);
+  Serial.print(F("A2=D")); Serial.print((int)A2);
+  Serial.print(F(" PORT")); Serial.print(g_APinDescription[A2].ulPort);
+  Serial.print(F(" pin")); Serial.println(g_APinDescription[A2].ulPin);
+  Serial.print(F("A3=D")); Serial.print((int)A3);
+  Serial.print(F(" PORT")); Serial.print(g_APinDescription[A3].ulPort);
+  Serial.print(F(" pin")); Serial.println(g_APinDescription[A3].ulPin);
   // PMUX[2] upper nibble = PA05(SCK) mux; PMUX[3] = 0x33 means PA06(MISO)+PA07(MOSI) on MUX D
   Serial.print(F("PMUX[2]=0x")); Serial.print(PORT->Group[PORTA].PMUX[2].reg, HEX);
   Serial.print(F("  PMUX[3]=0x")); Serial.println(PORT->Group[PORTA].PMUX[3].reg, HEX);
