@@ -108,17 +108,8 @@ void setup() {
   pinPeripheral(MISO_PIN, PIO_SERCOM);
   mfrc522.PCD_Init();
   RFID_PREP();
+  // Prints firmware version: 0x91/0x92 = good. 0x00 or 0xFF = SPI fault (check wiring).
   MFRC522Debug::PCD_DumpVersionToSerial(mfrc522, Serial);
-
-  // Sanity-check SPI: firmware version 0x91/0x92 = RC522 v1/v2.
-  // 0x00 or 0xFF means MISO is stuck (wiring or SERCOM config fault).
-  byte fwVer = mfrc522.PCD_ReadRegister(MFRC522Constants::VersionReg);
-  if (fwVer == 0x00 || fwVer == 0xFF) {
-    Serial.println(F("ERROR: RC522 not responding (SPI stuck). Check wiring/SERCOM."));
-  } else {
-    Serial.print(F("RC522 firmware version: 0x"));
-    Serial.println(fwVer, HEX);
-  }
   // Load key from flash if one has been written before
   KeyStorage ks = key_storage.read();
   if (ks.valid) {
