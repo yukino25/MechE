@@ -23,10 +23,11 @@ CPX toggle switch between read and write mode for RFID
 #define BUZZER_PIN A0
 // Hardware SPI on SERCOM0 — the only valid external SPI interface on CPX edge pads
 // Default SPI uses SERCOM3 (internal flash), so a custom SPIClass is required
-#define SS_PIN   A7  // chip select: any free GPIO (A6/A7 are PORTB UART pads, fine as GPIO)
+#define SS_PIN   A7  // chip select: PORTB GPIO (PB08)
 #define SCK_PIN  A1  // SERCOM0/PAD1 (PA05)
 #define MOSI_PIN A3  // SERCOM0/PAD3 (PA07)
 #define MISO_PIN A2  // SERCOM0/PAD2 (PA06)
+#define RST_PIN  A6  // RC522 reset: drive HIGH to keep chip active (PB09, free GPIO)
 
 //*Timing constants
 #define HOLD_DURATION  2000UL   // ms card must be held continuously to toggle mode (vs tap to lock)
@@ -89,8 +90,12 @@ void setup() {
   pinMode(RFID_MODE, INPUT);
   pinMode(BUZZER_PIN, OUTPUT);
 
-  // Random number generator (A6/A5 used here; A3 becomes MOSI after rfidSPI.begin())
+  // Random number generator (A6/A5 used here before RST_PIN is configured as OUTPUT)
   randomSeed(analogRead(A6) ^ (analogRead(A5) << 8) ^ micros());
+
+  // Drive RST HIGH to keep RC522 out of reset/power-down before SPI init
+  pinMode(RST_PIN, OUTPUT);
+  digitalWrite(RST_PIN, HIGH);
 
   // Initialize RFID reader on SERCOM0 (A1=SCK, A2=MISO, A3=MOSI, A7=SS)
   rfidSPI.begin();
