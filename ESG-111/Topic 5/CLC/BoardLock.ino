@@ -186,14 +186,26 @@ void setup() {
   Serial.println();
 
   mfrc522.PCD_Init();
-  // MFRC522DriverSPI::init() calls rfidSPI.begin() internally, which resets the PORT
-  // mux from MUX D (correct for SERCOM0 on PA05-PA07) back to MUX C (wrong peripheral).
-  // Reapply the correct MUX D settings so SPI works after PCD_Init().
+
+  // Post-PCD_Init diagnostics: did PCD_Init() reset the PORT mux? Does raw SPI still work?
+  Serial.print(F("Post-init PMUX[2]=0x")); Serial.print(PORT->Group[PORTA].PMUX[2].reg, HEX);
+  Serial.print(F(" PMUX[3]=0x")); Serial.println(PORT->Group[PORTA].PMUX[3].reg, HEX);
+  rfidSPI.beginTransaction(SPISettings(100000, MSBFIRST, SPI_MODE0));
+  digitalWrite(SS_PIN, LOW); delayMicroseconds(20);
+  rfidSPI.transfer(0xEE); byte postVer = rfidSPI.transfer(0x00);
+  delayMicroseconds(20); digitalWrite(SS_PIN, HIGH);
+  rfidSPI.endTransaction();
+  Serial.print(F("Post-init VersionReg raw=0x")); Serial.println(postVer, HEX);
+
+  // Reapply MUX D (in case PCD_Init reset it) and re-read
   PORT->Group[PORTA].PINCFG[5].reg |= PORT_PINCFG_PMUXEN;
   PORT->Group[PORTA].PMUX[2].reg    = (PORT->Group[PORTA].PMUX[2].reg & 0x0F) | 0x30;
   PORT->Group[PORTA].PINCFG[6].reg  = PORT_PINCFG_PMUXEN | PORT_PINCFG_INEN;
   PORT->Group[PORTA].PINCFG[7].reg |= PORT_PINCFG_PMUXEN;
   PORT->Group[PORTA].PMUX[3].reg    = 0x33;
+  Serial.print(F("After remux PMUX[2]=0x")); Serial.print(PORT->Group[PORTA].PMUX[2].reg, HEX);
+  Serial.print(F(" PMUX[3]=0x")); Serial.println(PORT->Group[PORTA].PMUX[3].reg, HEX);
+
   RFID_PREP();
   // Prints firmware version: 0x91/0x92 = good. 0x00 or 0xFF = SPI fault (check wiring).
   MFRC522Debug::PCD_DumpVersionToSerial(mfrc522, Serial);
