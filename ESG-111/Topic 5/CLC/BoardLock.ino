@@ -123,6 +123,21 @@ void setup() {
   // Without this, Adafruit SAMD may skip initSPI() if the stored clock == default clock.
   rfidSPI.beginTransaction(SPISettings(2000000, MSBFIRST, SPI_MODE0));
   rfidSPI.endTransaction();
+
+  // --- REGISTER DIAGNOSTICS (remove once working) ---
+  // PMUX[2] upper nibble = PA05(SCK) mux; PMUX[3] = 0x33 means PA06(MISO)+PA07(MOSI) on MUX D
+  Serial.print(F("PMUX[2]=0x")); Serial.print(PORT->Group[PORTA].PMUX[2].reg, HEX);
+  Serial.print(F("  PMUX[3]=0x")); Serial.println(PORT->Group[PORTA].PMUX[3].reg, HEX);
+  // PINCFG[6] should have PMUXEN(bit0) + INEN(bit1) = 0x03
+  Serial.print(F("PINCFG5=0x")); Serial.print(PORT->Group[PORTA].PINCFG[5].reg, HEX);
+  Serial.print(F("  PINCFG6=0x")); Serial.print(PORT->Group[PORTA].PINCFG[6].reg, HEX);
+  Serial.print(F("  PINCFG7=0x")); Serial.println(PORT->Group[PORTA].PINCFG[7].reg, HEX);
+  // SERCOM0 CTRLA bit1 = ENABLE; if 0 the SPI hardware block is not running
+  Serial.print(F("SERCOM0_CTRLA=0x")); Serial.println(SERCOM0->SPI.CTRLA.reg, HEX);
+  // SS pin state: should be HIGH (1) between transactions
+  Serial.print(F("SS_PIN digitalRead=")); Serial.println(digitalRead(SS_PIN));
+  // --- END DIAGNOSTICS ---
+
   mfrc522.PCD_Init();
   RFID_PREP();
   // Prints firmware version: 0x91/0x92 = good. 0x00 or 0xFF = SPI fault (check wiring).
