@@ -118,100 +118,9 @@ void setup() {
   rfidSPI.beginTransaction(SPISettings(100000, MSBFIRST, SPI_MODE0));
   rfidSPI.endTransaction();
 
-  // --- REGISTER DIAGNOSTICS (remove once working) ---
-  // Verify A1/A2/A3 actually resolve to PA05/PA06/PA07 in this variant
-  // Expected: A1→PORT0 pin5, A2→PORT0 pin6, A3→PORT0 pin7
-  Serial.print(F("A1=D")); Serial.print((int)A1);
-  Serial.print(F(" PORT")); Serial.print(g_APinDescription[A1].ulPort);
-  Serial.print(F(" pin")); Serial.println(g_APinDescription[A1].ulPin);
-  Serial.print(F("A2=D")); Serial.print((int)A2);
-  Serial.print(F(" PORT")); Serial.print(g_APinDescription[A2].ulPort);
-  Serial.print(F(" pin")); Serial.println(g_APinDescription[A2].ulPin);
-  Serial.print(F("A3=D")); Serial.print((int)A3);
-  Serial.print(F(" PORT")); Serial.print(g_APinDescription[A3].ulPort);
-  Serial.print(F(" pin")); Serial.println(g_APinDescription[A3].ulPin);
-  // PMUX[2] upper nibble = PA05(SCK) mux; PMUX[3] = 0x33 means PA06(MISO)+PA07(MOSI) on MUX D
-  Serial.print(F("PMUX[2]=0x")); Serial.print(PORT->Group[PORTA].PMUX[2].reg, HEX);
-  Serial.print(F("  PMUX[3]=0x")); Serial.println(PORT->Group[PORTA].PMUX[3].reg, HEX);
-  // PINCFG[6] should have PMUXEN(bit0) + INEN(bit1) = 0x03
-  Serial.print(F("PINCFG5=0x")); Serial.print(PORT->Group[PORTA].PINCFG[5].reg, HEX);
-  Serial.print(F("  PINCFG6=0x")); Serial.print(PORT->Group[PORTA].PINCFG[6].reg, HEX);
-  Serial.print(F("  PINCFG7=0x")); Serial.println(PORT->Group[PORTA].PINCFG[7].reg, HEX);
-  // SERCOM0 CTRLA bit1 = ENABLE; if 0 the SPI hardware block is not running
-  Serial.print(F("SERCOM0_CTRLA=0x")); Serial.println(SERCOM0->SPI.CTRLA.reg, HEX);
-  // SS toggle test: confirm A7 can actually drive LOW
-  digitalWrite(SS_PIN, LOW);
-  delay(1);
-  Serial.print(F("SS LOW test=")); Serial.println(digitalRead(SS_PIN));  // must be 0
-  digitalWrite(SS_PIN, HIGH);
-  delay(1);
-  Serial.print(F("SS HIGH test=")); Serial.println(digitalRead(SS_PIN)); // must be 1
-  // --- END DIAGNOSTICS ---
-
-  // Write-read test: write 0xAA to ModWidthReg then read it back.
-  // ModWidthReg addr=0x24, shifted: write byte=0x48, read byte=0xC8.
-  // Result: 0xAA = SPI working; 0x26 = write failed (default); 0x00/0xFF = no response.
-  rfidSPI.beginTransaction(SPISettings(100000, MSBFIRST, SPI_MODE0));
-  digitalWrite(SS_PIN, LOW); delayMicroseconds(20);
-  rfidSPI.transfer(0x48); rfidSPI.transfer(0xAA);  // write 0xAA to ModWidthReg
-  delayMicroseconds(20); digitalWrite(SS_PIN, HIGH);
-  rfidSPI.endTransaction();
-  delay(2);
-  rfidSPI.beginTransaction(SPISettings(100000, MSBFIRST, SPI_MODE0));
-  digitalWrite(SS_PIN, LOW); delayMicroseconds(20);
-  rfidSPI.transfer(0xC8);                          // read ModWidthReg
-  byte rwTest = rfidSPI.transfer(0x00);
-  delayMicroseconds(20); digitalWrite(SS_PIN, HIGH);
-  rfidSPI.endTransaction();
-  Serial.print(F("ModWidth write=0xAA readback=0x")); Serial.println(rwTest, HEX);
-
-  // VersionReg repeated 4x — consistent value = real response, varying = floating MISO
-  Serial.print(F("VersionReg x4: "));
-  for (byte n = 0; n < 4; n++) {
-    rfidSPI.beginTransaction(SPISettings(100000, MSBFIRST, SPI_MODE0));
-    digitalWrite(SS_PIN, LOW); delayMicroseconds(20);
-    rfidSPI.transfer(0xEE);                        // VersionReg read byte
-    byte v = rfidSPI.transfer(0x00);
-    delayMicroseconds(20); digitalWrite(SS_PIN, HIGH);
-    rfidSPI.endTransaction();
-    delay(2);
-    Serial.print(F("0x")); Serial.print(v, HEX); Serial.print(' ');
-  }
-  Serial.println();
-
   mfrc522.PCD_Init();
-
-  // Post-PCD_Init diagnostics: did PCD_Init() reset the PORT mux? Does raw SPI still work?
-  Serial.print(F("Post-init PMUX[2]=0x")); Serial.print(PORT->Group[PORTA].PMUX[2].reg, HEX);
-  Serial.print(F(" PMUX[3]=0x")); Serial.println(PORT->Group[PORTA].PMUX[3].reg, HEX);
-  rfidSPI.beginTransaction(SPISettings(100000, MSBFIRST, SPI_MODE0));
-  digitalWrite(SS_PIN, LOW); delayMicroseconds(20);
-  rfidSPI.transfer(0xEE); byte postVer = rfidSPI.transfer(0x00);
-  delayMicroseconds(20); digitalWrite(SS_PIN, HIGH);
-  rfidSPI.endTransaction();
-  Serial.print(F("Post-init VersionReg raw=0x")); Serial.println(postVer, HEX);
-
-  // Reapply MUX D (in case PCD_Init reset it) and re-read
-  PORT->Group[PORTA].PINCFG[5].reg |= PORT_PINCFG_PMUXEN;
-  PORT->Group[PORTA].PMUX[2].reg    = (PORT->Group[PORTA].PMUX[2].reg & 0x0F) | 0x30;
-  PORT->Group[PORTA].PINCFG[6].reg  = PORT_PINCFG_PMUXEN | PORT_PINCFG_INEN;
-  PORT->Group[PORTA].PINCFG[7].reg |= PORT_PINCFG_PMUXEN;
-  PORT->Group[PORTA].PMUX[3].reg    = 0x33;
-  Serial.print(F("After remux PMUX[2]=0x")); Serial.print(PORT->Group[PORTA].PMUX[2].reg, HEX);
-  Serial.print(F(" PMUX[3]=0x")); Serial.println(PORT->Group[PORTA].PMUX[3].reg, HEX);
-
-  // Confirm rfidSPI still works after PORT re-writes, before library call
-  rfidSPI.beginTransaction(SPISettings(100000, MSBFIRST, SPI_MODE0));
-  digitalWrite(SS_PIN, LOW); delayMicroseconds(20);
-  rfidSPI.transfer(0xEE); byte preLibVer = rfidSPI.transfer(0x00);
-  delayMicroseconds(20); digitalWrite(SS_PIN, HIGH);
-  rfidSPI.endTransaction();
-  Serial.print(F("Pre-lib VersionReg=0x")); Serial.println(preLibVer, HEX);
-  // If 0x82 here but library fails → library uses global SPI (SERCOM3) not rfidSPI (SERCOM0)
-
-  RFID_PREP();
-  // Prints firmware version: 0x91/0x92 = good. 0x00 or 0xFF = SPI fault (check wiring).
   mfrc522.PCD_DumpVersionToSerial();
+  RFID_PREP();
   // Load key from flash if one has been written before
   KeyStorage ks = key_storage.read();
   if (ks.valid) {
@@ -394,11 +303,6 @@ void RUN(){
     x = CircuitPlayground.motionX();
     y = CircuitPlayground.motionY();
     z = CircuitPlayground.motionZ();
-    Serial.print(x);
-    Serial.print(", ");
-    Serial.print(y);
-    Serial.print(", ");
-    Serial.println(z);
     if (lock) {
         ALARM_UPDATE();
     } else {
