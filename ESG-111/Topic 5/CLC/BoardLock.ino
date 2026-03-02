@@ -10,7 +10,7 @@ CPX toggle switch between read and write mode for RFID
 #include <Adafruit_CircuitPlayground.h>
 #include <SPI.h>
 #include "wiring_private.h"  // pinPeripheral() + sercom0 for custom SPI
-#include "MFRC522.h"
+#include <MFRC522.h>
 //nonvolatile memory library to store the last randomly generated key
 #include <FlashStorage.h>
 

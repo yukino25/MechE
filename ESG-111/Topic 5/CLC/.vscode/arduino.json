@@ -1,0 +1,6 @@
+{
+    "sketch": "BoardLock.ino",
+    "board": "adafruit:samd:adafruit_circuitplayground_m0",
+    "port": "",
+    "output": ".build"
+}
