@@ -11,6 +11,7 @@ VersionReg x4: 0x82 0x82 0x82 0x82
 Post-init PMUX[2]=0x10 PMUX[3]=0x11
 Post-init VersionReg raw=0x0
 After remux PMUX[2]=0x30 PMUX[3]=0x33
+Pre-lib VersionReg=0x82
 Scan a MIFARE Classic PICC to demonstrate read and write.
 Using key (for A and B): FF FF FF FF FF FF
 BEWARE: Data will be written to the PICC, in sector #1
