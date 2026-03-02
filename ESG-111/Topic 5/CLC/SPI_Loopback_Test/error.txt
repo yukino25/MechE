@@ -1,0 +1,19 @@
+A1=D15 PORT0 pin5
+A2=D16 PORT0 pin6
+A3=D17 PORT0 pin7
+PMUX[2]=0x30  PMUX[3]=0x33
+PINCFG5=0x43  PINCFG6=0x3  PINCFG7=0x43
+SERCOM0_CTRLA=0x22000E
+SS LOW test=0
+SS HIGH test=1
+ModWidth write=0xAA readback=0xAA
+VersionReg x4: 0x82 0x82 0x82 0x82 
+Post-init PMUX[2]=0x10 PMUX[3]=0x11
+Post-init VersionReg raw=0x0
+After remux PMUX[2]=0x30 PMUX[3]=0x33
+Pre-lib VersionReg=0x82
+Scan a MIFARE Classic PICC to demonstrate read and write.
+Using key (for A and B): FF FF FF FF FF FF
+BEWARE: Data will be written to the PICC, in sector #1
+ = (unknown)
+WARNING: Communication failure, is the MFRC522 properly connected?
