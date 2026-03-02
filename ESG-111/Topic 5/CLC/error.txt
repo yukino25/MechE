@@ -1,40 +1,19 @@
-In file included from c:\Users\schlo\OneDrive\Documents\Arduino\libraries\MFRC522\src/MFRC522.h:14,
-                 from C:\Users\schlo\MechE\MechE-1\ESG-111\Topic 5\CLC\BoardLock\BoardLock.ino:13:
-c:\Users\schlo\OneDrive\Documents\Arduino\libraries\MFRC522\src/deprecated.h:12: warning: "DEPRECATED" redefined
-   12 | #define DEPRECATED [[deprecated]]
-      | 
-In file included from c:\Users\schlo\OneDrive\Documents\Arduino\libraries\Adafruit_Circuit_Playground/Adafruit_Circuit_Playground.h:22,
-                 from c:\Users\schlo\OneDrive\Documents\Arduino\libraries\Adafruit_Circuit_Playground/Adafruit_CircuitPlayground.h:3,
-                 from C:\Users\schlo\MechE\MechE-1\ESG-111\Topic 5\CLC\BoardLock\BoardLock.ino:10:
-c:\Users\schlo\OneDrive\Documents\Arduino\libraries\Adafruit_Circuit_Playground/utility/Adafruit_CPlay_Mic.h:10: note: this is the location of the previous definition
-   10 |   #define DEPRECATED(func) func __attribute__ ((deprecated))
-      | 
-C:\Users\schlo\MechE\MechE-1\ESG-111\Topic 5\CLC\BoardLock\BoardLock.ino:72:42: error: no matching function for call to 'MFRC522::MFRC522(const uint8_t&, const uint8_t&, SPIClass*)'
-   72 | MFRC522 mfrc522(SS_PIN, RST_PIN, &rfidSPI);
-      |                                          ^
-In file included from C:\Users\schlo\MechE\MechE-1\ESG-111\Topic 5\CLC\BoardLock\BoardLock.ino:13:
-c:\Users\schlo\OneDrive\Documents\Arduino\libraries\MFRC522\src/MFRC522.h:274:2: note: candidate: 'MFRC522::MFRC522(byte, byte)'
-  274 |  MFRC522(byte chipSelectPin, byte resetPowerDownPin);
-      |  ^~~~~~~
-c:\Users\schlo\OneDrive\Documents\Arduino\libraries\MFRC522\src/MFRC522.h:274:2: note:   candidate expects 2 arguments, 3 provided
-c:\Users\schlo\OneDrive\Documents\Arduino\libraries\MFRC522\src/MFRC522.h:273:2: note: candidate: 'MFRC522::MFRC522(byte)'
-  273 |  MFRC522(byte resetPowerDownPin);
-      |  ^~~~~~~
-c:\Users\schlo\OneDrive\Documents\Arduino\libraries\MFRC522\src/MFRC522.h:273:2: note:   candidate expects 1 argument, 3 provided
-c:\Users\schlo\OneDrive\Documents\Arduino\libraries\MFRC522\src/MFRC522.h:272:2: note: candidate: 'MFRC522::MFRC522()'
-  272 |  MFRC522();
-      |  ^~~~~~~
-c:\Users\schlo\OneDrive\Documents\Arduino\libraries\MFRC522\src/MFRC522.h:272:2: note:   candidate expects 0 arguments, 3 provided
-In file included from C:\Users\schlo\MechE\MechE-1\ESG-111\Topic 5\CLC\BoardLock\BoardLock.ino:13:
-c:\Users\schlo\OneDrive\Documents\Arduino\libraries\MFRC522\src/MFRC522.h:78:7: note: candidate: 'constexpr MFRC522::MFRC522(const MFRC522&)'
-   78 | class MFRC522 {
-      |       ^~~~~~~
-c:\Users\schlo\OneDrive\Documents\Arduino\libraries\MFRC522\src/MFRC522.h:78:7: note:   candidate expects 1 argument, 3 provided
-c:\Users\schlo\OneDrive\Documents\Arduino\libraries\MFRC522\src/MFRC522.h:78:7: note: candidate: 'constexpr MFRC522::MFRC522(MFRC522&&)'
-c:\Users\schlo\OneDrive\Documents\Arduino\libraries\MFRC522\src/MFRC522.h:78:7: note:   candidate expects 1 argument, 3 provided
-Multiple libraries were found for "Adafruit_ZeroDMA.h"
-  Used: C:\Users\schlo\AppData\Local\Arduino15\packages\adafruit\hardware\samd\1.7.17\libraries\Adafruit_ZeroDMA
-  Not used: C:\Users\schlo\OneDrive\Documents\Arduino\libraries\Adafruit_Zero_DMA_Library
-exit status 1
-
-Compilation error: no matching function for call to 'MFRC522::MFRC522(const uint8_t&, const uint8_t&, SPIClass*)'
+A1=D15 PORT0 pin5
+A2=D16 PORT0 pin6
+A3=D17 PORT0 pin7
+PMUX[2]=0x30  PMUX[3]=0x33
+PINCFG5=0x43  PINCFG6=0x3  PINCFG7=0x43
+SERCOM0_CTRLA=0x22000E
+SS LOW test=0
+SS HIGH test=1
+ModWidth write=0xAA readback=0xAA
+VersionReg x4: 0x82 0x82 0x82 0x82 
+Post-init PMUX[2]=0x10 PMUX[3]=0x11
+Post-init VersionReg raw=0x0
+After remux PMUX[2]=0x30 PMUX[3]=0x33
+Pre-lib VersionReg=0x82
+Scan a MIFARE Classic PICC to demonstrate read and write.
+Using key (for A and B): FF FF FF FF FF FF
+BEWARE: Data will be written to the PICC, in sector #1
+ = (unknown)
+WARNING: Communication failure, is the MFRC522 properly connected?
