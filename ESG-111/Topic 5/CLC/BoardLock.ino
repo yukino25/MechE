@@ -206,6 +206,15 @@ void setup() {
   Serial.print(F("After remux PMUX[2]=0x")); Serial.print(PORT->Group[PORTA].PMUX[2].reg, HEX);
   Serial.print(F(" PMUX[3]=0x")); Serial.println(PORT->Group[PORTA].PMUX[3].reg, HEX);
 
+  // Confirm rfidSPI still works after PORT re-writes, before library call
+  rfidSPI.beginTransaction(SPISettings(100000, MSBFIRST, SPI_MODE0));
+  digitalWrite(SS_PIN, LOW); delayMicroseconds(20);
+  rfidSPI.transfer(0xEE); byte preLibVer = rfidSPI.transfer(0x00);
+  delayMicroseconds(20); digitalWrite(SS_PIN, HIGH);
+  rfidSPI.endTransaction();
+  Serial.print(F("Pre-lib VersionReg=0x")); Serial.println(preLibVer, HEX);
+  // If 0x82 here but library fails → library uses global SPI (SERCOM3) not rfidSPI (SERCOM0)
+
   RFID_PREP();
   // Prints firmware version: 0x91/0x92 = good. 0x00 or 0xFF = SPI fault (check wiring).
   MFRC522Debug::PCD_DumpVersionToSerial(mfrc522, Serial);
