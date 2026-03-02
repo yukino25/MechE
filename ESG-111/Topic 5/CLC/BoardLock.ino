@@ -1,16 +1,15 @@
 /*
 Adafruit circuit playground express
 using onboard accelerometer to detect movement and sound buzzer when movement is detected.
-external RC522 RFID reader to detect when a specific RFID tag is near, disable the buzzer when the tag actives, and re-enable the buzzer when the tag actives again.
-
-
+external RC522 RFID reader to detect when a specific RFID tag is near, disable the buzzer when the tag actives, 
+and re-enable the buzzer when the tag actives again.
 CPX toggle switch between read and write mode for RFID
 */
 //*Libraries
 #include <Adafruit_CircuitPlayground.h>
 #include <SPI.h>
 #include "wiring_private.h"  // pinPeripheral() + sercom0 for custom SPI
-#include <MFRC522.h>
+#include "MFRC522.h"
 //nonvolatile memory library to store the last randomly generated key
 #include <FlashStorage.h>
 
@@ -27,33 +26,32 @@ CPX toggle switch between read and write mode for RFID
 #define RST_PIN  A6  // RC522 reset: drive HIGH to keep chip active (PB09, free GPIO)
 
 //*Timing constants
-#define HOLD_DURATION  2000UL   // ms card must be held continuously to toggle mode (vs tap to lock)
+#define HOLD_DURATION  2000UL   // ms card must be held continuously to toggle mode
 #define LOCK_GRACE_MS 10000UL   // ms after locking before alarm can activate
-#define ALARM_STOP_MS 10000UL   // ms of no movement before alarm silences itself
+#define ALARM_STOP_MS 10000UL   // ms of no movement before alarm turns off
 #define AUTO_LOCK_MS  10000UL   // ms of no movement before auto-lock engages
 
 //*Variables
 //accelerometer variables
 float x, y, z;
 const float threshold = 1.5; //threshold for movement detection
+float magnitude;
+
 //lock state variable, toggle when correct RFID tag is detected, controls whether movement detection and buzzer are active
 bool lock = false;
 bool readmode;
 // Operating mode: false = manual (tap to lock/unlock), true = auto (lock when no movement)
 bool autoLockMode = false;
 
-// Alarm / auto-lock timing
+// Alarm & auto-lock timing
 unsigned long lastMovementTime = 0;  // last millis() movement was detected (unlocked, auto mode)
-unsigned long lockGraceEnd    = 0;   // alarm won't activate until after this timestamp
-bool          alarmSounding   = false;
+unsigned long lockGraceEnd    = 0;   // alarm won't activate until after grace period
+bool alarmSounding = false;
 unsigned long noMovementSince = 0;   // when continuous no-movement started (while alarm is on)
 
 // Card tap-vs-hold detection state
-bool          cardPending      = false;
+bool cardPending = false;
 unsigned long cardDetectedTime = 0;
-
-float magnitude;
-
 
 // Struct and flash storage slot for keeping the key across power cycles
 typedef struct {
@@ -63,11 +61,9 @@ typedef struct {
 FlashStorage(key_storage, KeyStorage);
 
 // Custom SPI on SERCOM0 using CPX edge pads A1(SCK)/A3(MOSI)/A2(MISO)
-// Constructor: SPIClass(sercom, miso_pin, sck_pin, mosi_pin, tx_pad, rx_pad)
-// SPI_PAD_3_SCK_1 → MOSI=PAD3(A3), SCK=PAD1(A1) | SERCOM_RX_PAD_2 → MISO=PAD2(A2)
 SPIClass rfidSPI(&sercom0, MISO_PIN, SCK_PIN, MOSI_PIN, SPI_PAD_3_SCK_1, SERCOM_RX_PAD_2);
 
-// Create MFRC522 instance using v1-style constructor with custom SPI bus (SERCOM0)
+// Create MFRC522 instance with custom SPI bus (SERCOM0)
 // SPIClass* param routes all SPI transactions through rfidSPI instead of global SPI (SERCOM3)
 MFRC522 mfrc522(SS_PIN, RST_PIN, &rfidSPI);
 MFRC522::MIFARE_Key key;
@@ -81,46 +77,49 @@ byte buffer[18];
 
 void setup() {
   Serial.begin(9600);
-  // Wait up to 3 s for serial monitor; continue anyway so RFID works standalone
+  // Wait up to 3 sec for serial monitor; continue anyway so RFID works standalone
   unsigned long _t = millis();
   while (!Serial && millis() - _t < 3000);
   CircuitPlayground.begin();
   pinMode(RFID_MODE, INPUT);
   pinMode(BUZZER_PIN, OUTPUT);
 
-  // Random number generator (A6/A5 used here before RST_PIN is configured as OUTPUT)
+  // Random number generator (A6/A5 used before RST_PIN is configured as OUTPUT)
   randomSeed(analogRead(A6) ^ (analogRead(A5) << 8) ^ micros());
 
   // Drive RST and SS to known-good states before the SPI bus is touched
-  // SS must be HIGH (deselected) before rfidSPI.begin() or the RC522 sees bus glitches
+  // SS must be HIGH (deselected) before rfidSPI.begin() or the RC522 sees bad data on the bus
   pinMode(SS_PIN,  OUTPUT); digitalWrite(SS_PIN,  HIGH);
   pinMode(RST_PIN, OUTPUT); digitalWrite(RST_PIN, HIGH);
   delay(50);  // RC522 needs ~50 ms after RST goes HIGH before SPI is valid
 
   // Initialize RFID reader on SERCOM0 (A1=SCK, A2=MISO, A3=MOSI, A7=SS)
   rfidSPI.begin();
-  // Directly mux A1(PA05)/A2(PA06)/A3(PA07) to SERCOM0 peripheral C (MUX value 0x2).
-  // rfidSPI.begin() leaves them on PIO_ANALOG; pinPeripheral() relies on the Adafruit
-  // variant library which may behave differently — write the PORT registers directly.
-  //   PMUX[n] holds two pins: even pin in bits[3:0], odd pin in bits[7:4]
-  //   SERCOM0 for PA04-PA07 is on MUX column D (peripheral D = 0x3), NOT column C.
-  //   Column C on these pins is AC/AIN (Analog Comparator) — previous 0x2 was wrong.
-  //   PA05 = odd  → PMUX[2] bits[7:4]; set to 0x3, preserve PA04 bits[3:0]
-  //   PA06 = even → PMUX[3] bits[3:0]; set to 0x3
-  //   PA07 = odd  → PMUX[3] bits[7:4]; set to 0x3
+  /* Directly mux A1(PA05)/A2(PA06)/A3(PA07) to SERCOM0 peripheral C (MUX value 0x2).
+    rfidSPI.begin() leaves them on PIO_ANALOG; pinPeripheral() relies on the Adafruit
+    variant library which may behave differently — write the PORT registers directly.
+     PMUX[n] holds two pins: even pin in bits[3:0], odd pin in bits[7:4]
+     SERCOM0 for PA04-PA07 is on MUX column D (peripheral D = 0x3)
+     Column C on these pins is AC/AIN (Analog Comparator) 
+     PA05 = odd  → PMUX[2] bits[7:4]; set to 0x3, preserve PA04 bits[3:0]
+     PA06 = even → PMUX[3] bits[3:0]; set to 0x3
+     PA07 = odd  → PMUX[3] bits[7:4]; set to 0x3*/
   PORT->Group[PORTA].PINCFG[5].reg |= PORT_PINCFG_PMUXEN;
   PORT->Group[PORTA].PMUX[2].reg    = (PORT->Group[PORTA].PMUX[2].reg & 0x0F) | 0x30;
-  PORT->Group[PORTA].PINCFG[6].reg  = PORT_PINCFG_PMUXEN | PORT_PINCFG_INEN; // INEN for MISO
+  PORT->Group[PORTA].PINCFG[6].reg  = PORT_PINCFG_PMUXEN | PORT_PINCFG_INEN;
   PORT->Group[PORTA].PINCFG[7].reg |= PORT_PINCFG_PMUXEN;
-  PORT->Group[PORTA].PMUX[3].reg    = 0x33;  // PA06 even=0x3 (SERCOM0/PAD2), PA07 odd=0x3 (SERCOM0/PAD3)
-  // Force SERCOM0 hardware config to run at 2 MHz before PCD_Init touches the bus.
-  // Without this, Adafruit SAMD may skip initSPI() if the stored clock == default clock.
+  PORT->Group[PORTA].PMUX[3].reg    = 0x33;
+
+
+  /* Force SERCOM0 hardware config to run at 2 MHz before PCD_Init touches the bus.
+    Without this, Adafruit SAMD skips initSPI() if the stored clock == default clock.*/
   rfidSPI.beginTransaction(SPISettings(100000, MSBFIRST, SPI_MODE0));
   rfidSPI.endTransaction();
 
   mfrc522.PCD_Init();
   mfrc522.PCD_DumpVersionToSerial();
   RFID_PREP();
+
   // Load key from flash if one has been written before
   KeyStorage ks = key_storage.read();
   if (ks.valid) {
@@ -135,7 +134,6 @@ void setup() {
 }
 
 void loop(){
-
     if (readmode) {
         RFID_WRITE();
     }
@@ -167,21 +165,18 @@ void RFID_WRITE() {
     MFRC522::PICC_Type piccType = mfrc522.PICC_GetType(mfrc522.uid.sak);
     Serial.println(MFRC522::PICC_GetTypeName(piccType));
 
-    // Check for compatibility
+    // Check for compatibility, only works with MIFARE Classic cards
     if (    piccType != MFRC522::PICC_TYPE_MIFARE_MINI
         &&  piccType != MFRC522::PICC_TYPE_MIFARE_1K
         &&  piccType != MFRC522::PICC_TYPE_MIFARE_4K) {
-        //only works with MIFARE Classic cards
         return;
     }
 
-    // In this sample we use the second sector,
-    // that is: sector #1, covering block #4 up to and including block #7
+    // sector #1, covering block #4 up to and including block #7
     byte sector         = 1;
     byte blockAddr      = 4;
 
     // Generate a random 16-byte key and store it for later verification in RUN()
-
     for (byte i = 0; i < 16; i++) {
         dataBlock[i] = random(0, 256);
     }
@@ -196,7 +191,7 @@ void RFID_WRITE() {
     Serial.print(F("Generated key: "));
     dump_byte_array(dataBlock, 16);
     Serial.println();
-    byte trailerBlock   = 7;
+    byte trailerBlock = 7;
     MFRC522::StatusCode status;
     byte buffer[18];
     byte size = sizeof(buffer);
@@ -258,7 +253,7 @@ void RFID_WRITE() {
     Serial.print(F("Data in block ")); Serial.print(blockAddr); Serial.println(F(":"));
     dump_byte_array(buffer, 16); Serial.println();
 
-    //* Check that data in block is what was have written by counting the number of bytes that are equal
+    //* Check that data in block is what was written by counting the number of bytes that are equal
     Serial.println(F("Checking result..."));
     byte count = 0;
     for (byte i = 0; i < 16; i++) {
@@ -299,7 +294,7 @@ void RUN(){
         RFID_READ();
     }
 
-    // Read accelerometer once per loop iteration
+    // Read accelerometer data
     x = CircuitPlayground.motionX();
     y = CircuitPlayground.motionY();
     z = CircuitPlayground.motionZ();
@@ -345,7 +340,7 @@ void CHECK_CARD_HOLD() {
         }
 
         if (elapsed >= HOLD_DURATION) {
-            // 2-second hold confirmed: toggle operating mode
+            // 2-second hold confirmed: toggle lock mode
             cardPending   = false;
             autoLockMode  = !autoLockMode;
             //number of beeps based on mode: 2 for auto, 3 for manual
@@ -413,7 +408,7 @@ void ALARM_UPDATE() {
             }
             if (millis() - noMovementSince >= ALARM_STOP_MS) {
                 // 10 seconds of no movement: silence alarm
-                alarmSounding   = false;
+                alarmSounding = false;
                 noMovementSince = 0;
                 noTone(BUZZER_PIN);
             }
@@ -429,11 +424,11 @@ void AUTO_LOCK_CHECK() {
     if (MOVEMENT_DETECT()) {
         lastMovementTime = millis();
     } else if (lastMovementTime > 0 && millis() - lastMovementTime >= AUTO_LOCK_MS) {
-        lock            = true;
-        lockGraceEnd    = millis() + LOCK_GRACE_MS;
+        lock = true;
+        lockGraceEnd = millis() + LOCK_GRACE_MS;
         lastMovementTime = 0;
-        noMovementSince  = 0;
-        alarmSounding    = false;
+        noMovementSince = 0;
+        alarmSounding = false;
         Serial.println(F("AUTO LOCKED: no motion detected"));
     }
 }
@@ -453,8 +448,8 @@ void RFID_READ() {
 
     // Authenticate and read block 4 into buffer, then compare to stored key
     byte trailerBlock = 7;
-    byte blockAddr    = 4;
-    byte size         = sizeof(buffer);
+    byte blockAddr = 4;
+    byte size = sizeof(buffer);
     MFRC522::StatusCode status;
 
     status = (MFRC522::StatusCode) mfrc522.PCD_Authenticate(MFRC522::PICC_CMD_MF_AUTH_KEY_A, trailerBlock, &key, &(mfrc522.uid));
