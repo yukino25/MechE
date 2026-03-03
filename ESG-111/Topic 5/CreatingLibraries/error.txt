@@ -1,0 +1,50 @@
+C:\Users\schlo\MechE\MechE-1\ESG-111\Topic 5\CreatingLibraries\CreatingLibraries.cpp: In member function 'void Myfoods::readFoods()':
+C:\Users\schlo\MechE\MechE-1\ESG-111\Topic 5\CreatingLibraries\CreatingLibraries.cpp:65:33: error: incompatible types in assignment of 'int' to 'char [32]'
+   65 |          Response = Serial.read();
+      |                                 ^
+C:\Users\schlo\MechE\MechE-1\ESG-111\Topic 5\CreatingLibraries\CreatingLibraries.cpp:73:34: error: incompatible types in assignment of 'char' to 'char [8]'
+   73 |                   c += Response[j];
+      |                                  ^
+C:\Users\schlo\MechE\MechE-1\ESG-111\Topic 5\CreatingLibraries\CreatingLibraries.cpp:76:35: error: incompatible types in assignment of 'char' to 'char [4]'
+   76 |                   sz += Response[k];
+      |                                   ^
+C:\Users\schlo\MechE\MechE-1\ESG-111\Topic 5\CreatingLibraries\CreatingLibraries.cpp:84:24: error: incompatible types in assignment of 'const char [1]' to 'char [32]'
+   84 |             Response = "";
+      |                        ^~
+C:\Users\schlo\MechE\MechE-1\ESG-111\Topic 5\CreatingLibraries\CreatingLibraries.cpp:85:17: error: incompatible types in assignment of 'const char [1]' to 'char [8]'
+   85 |             c = "";
+      |                 ^~
+C:\Users\schlo\MechE\MechE-1\ESG-111\Topic 5\CreatingLibraries\CreatingLibraries.cpp:86:18: error: incompatible types in assignment of 'const char [1]' to 'char [4]'
+   86 |             sz = "";
+      |                  ^~
+C:\Users\schlo\MechE\MechE-1\ESG-111\Topic 5\CreatingLibraries\CreatingLibraries.cpp:90:20: error: incompatible types in assignment of 'const char [1]' to 'char [20]'
+   90 |             food = "";
+      |                    ^~
+C:\Users\schlo\MechE\MechE-1\ESG-111\Topic 5\CreatingLibraries\CreatingLibraries.cpp: In member function 'void Myfoods::getFruit()':
+C:\Users\schlo\MechE\MechE-1\ESG-111\Topic 5\CreatingLibraries\CreatingLibraries.cpp:108:54: error: invalid array assignment
+  108 |         food = fruit[color_val][size_val][random(0,2)];
+      |                                                      ^
+C:\Users\schlo\MechE\MechE-1\ESG-111\Topic 5\CreatingLibraries\CreatingLibraries.cpp: In member function 'void Myfoods::getVegetable()':
+C:\Users\schlo\MechE\MechE-1\ESG-111\Topic 5\CreatingLibraries\CreatingLibraries.cpp:122:58: error: invalid array assignment
+  122 |         food = vegetable[color_val][size_val][random(0,2)];
+      |                                                          ^
+C:\Users\schlo\MechE\MechE-1\ESG-111\Topic 5\CreatingLibraries\CreatingLibraries.cpp: In member function 'void Myfoods::getStarch()':
+C:\Users\schlo\MechE\MechE-1\ESG-111\Topic 5\CreatingLibraries\CreatingLibraries.cpp:133:55: error: invalid array assignment
+  133 |         food = starch[color_val][size_val][random(0,2)];
+      |                                                       ^
+C:\Users\schlo\MechE\MechE-1\ESG-111\Topic 5\CreatingLibraries\CreatingLibraries.cpp: In member function 'void Myfoods::printFoods()':
+C:\Users\schlo\MechE\MechE-1\ESG-111\Topic 5\CreatingLibraries\CreatingLibraries.cpp:147:16: error: incompatible types in assignment of 'const char [1]' to 'char [32]'
+  147 |     Response = "";
+      |                ^~
+C:\Users\schlo\MechE\MechE-1\ESG-111\Topic 5\CreatingLibraries\CreatingLibraries.cpp:148:9: error: incompatible types in assignment of 'const char [1]' to 'char [8]'
+  148 |     c = "";
+      |         ^~
+C:\Users\schlo\MechE\MechE-1\ESG-111\Topic 5\CreatingLibraries\CreatingLibraries.cpp:149:10: error: incompatible types in assignment of 'const char [1]' to 'char [4]'
+  149 |     sz = "";
+      |          ^~
+C:\Users\schlo\MechE\MechE-1\ESG-111\Topic 5\CreatingLibraries\CreatingLibraries.cpp:153:12: error: incompatible types in assignment of 'const char [1]' to 'char [20]'
+  153 |     food = "";
+      |            ^~
+exit status 1
+
+Compilation error: incompatible types in assignment of 'int' to 'char [32]'
