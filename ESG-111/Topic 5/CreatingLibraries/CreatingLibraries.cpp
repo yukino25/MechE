@@ -67,7 +67,11 @@ void Myfoods::readFoods(){
       //wait for input
     }
 
-         Serial.readBytesUntil('\n', Response, sizeof(Response));
+         int len = Serial.readBytesUntil('\n', Response, sizeof(Response)-1);
+        Response[len] = '\0';
+        if len > 0 && Response[len-1] == '\r' {
+            Response[len-1] = '\0'; // Remove the carriage return if present
+        }
          //go through response and split into color and size variables where color is before space and size is after space
          for (int i = 0; i < strlen(Response); i++){
             // at the space, split the response into color and size variables
@@ -167,6 +171,8 @@ void Myfoods::printFoods(){
 
 //compare food inputs to food arrays to determine integer values for color and size to be used in getFruit, getVegetable, and getStarch functions
 void Myfoods::compareFoods(){
+    colorfound = false;
+    sizefound = false;
     for(int i = 0; i < 8; i++){
         if(strcmp(c, color[i]) == 0){
             colorfound = true;
