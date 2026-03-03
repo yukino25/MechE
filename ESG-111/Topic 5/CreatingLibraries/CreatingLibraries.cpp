@@ -5,19 +5,21 @@
 
 Myfoods::Myfoods(){
   //add code to initialize variables
-    char Response[32];
-    char c[8];
-    char sz[4];
-    bool spacefound = false;
-    bool colorfound = false;
-    bool sizefound = false;
-    char color[8][8] = {"red", "orange", "yellow", "green", "blue", "purple", "brown", "white"};
-    char size[3][4] = {"sm", "med", "lg"};
-    int color_val;
-    int size_val;
-    char food[20];
+    Response[0] = '\0';
+    c[0] = '\0';
+    sz[0] = '\0';
+    spacefound = false;
+    colorfound = false;
+    sizefound = false;
+    char temp_color[8][8] = {"red", "orange", "yellow", "green", "blue", "purple", "brown", "white"};
+    memcpy(color, temp_color, sizeof(temp_color));
+    char temp_size[3][4] = {"sm", "med", "lg"};
+    memcpy(size, temp_size, sizeof(temp_size));
+    color_val = 0;
+    size_val = 0;
+    food[0] = '\0';
     //[color][size][2 options for each color and size combination]
-    char fruit[8][3][2][20] = {
+    char temp_fruit[8][3][2][20] = {
         {{"strawberry", "cherry"}, {"watermelon", "raspberry"}, {"pomegranate", "red apple"}},
         {{"mandarin", "apricot"}, {"orange", "cantaloupe"}, {"papaya", "mango"}},
         {{"lemon", "starfruit"}, {"banana", "pineapple"}, {"yellow pear", "quince"}},
@@ -27,7 +29,8 @@ Myfoods::Myfoods(){
         {{"date", "brown pear"}, {"brown fig", "tamarind"}, {"breadfruit", "jackfruit"}},
         {{"white peach", "lychee"}, {"white grape", "white nectarine"}, {"white fig", "longan"}}
     };
-    char vegetable[8][3][2][20] = {
+    memcpy(fruit, temp_fruit, sizeof(temp_fruit));
+    char temp_vegetable[8][3][2][20] = {
         {{"tomato", "red pepper"}, {"red onion", "radish"}, {"red cabbage", "beet"}},
         {{"carrot", "orange pepper"}, {"sweet potato", "pumpkin"}, {"butternut squash", "acorn squash"}},
         {{"yellow pepper", "corn"}, {"yellow squash", "yellow beet"}, {"yellow potato", "yellow onion"}},
@@ -37,7 +40,8 @@ Myfoods::Myfoods(){
         {{"mushroom", "brown onion"}, {"shiitake", "portobello"}, {"brown potato", "taro"}},
         {{"cauliflower", "daikon"}, {"white onion", "celery"}, {"white potato", "parsnip"}}
     };
-    char starch[8][3][2][20] = {
+    memcpy(vegetable, temp_vegetable, sizeof(temp_vegetable));
+    char temp_starch[8][3][2][20] = {
         {{"red potato", "red quinoa"}, {"red lentils", "red beans"}, {"red rice", "red pasta"}},
         {{"sweet potato", "orange yam"}, {"pumpkin bread", "orange squash"}, {"acorn squash", "orange grits"}},
         {{"yellow potato", "corn"}, {"yellow lentils", "yellow beans"}, {"yellow rice", "polenta"}},
@@ -47,6 +51,7 @@ Myfoods::Myfoods(){
         {{"brown rice", "brown quinoa"}, {"brown lentils", "wheat berries"}, {"brown bread", "rye bread"}},
         {{"white rice", "white potato"}, {"white beans", "white pasta"}, {"white bread", "white grits"}}
     };
+    memcpy(starch, temp_starch, sizeof(temp_starch));
 }
 
 void Myfoods::begin(){
@@ -62,7 +67,7 @@ void Myfoods::readFoods(){
       //wait for input
     }
 
-         Response = Serial.read();
+         Serial.readBytesUntil('\n', Response, sizeof(Response));
          //go through response and split into color and size variables where color is before space and size is after space
          for (int i = 0; i < strlen(Response); i++){
             // at the space, split the response into color and size variables
@@ -70,10 +75,13 @@ void Myfoods::readFoods(){
                 spacefound = true;
                 // loop through response and add characters to corresponding variables
                 for (int j = 0; j < i; j++){
-                  c += Response[j];
+                    c[j] = Response[j];
+                    c[j+1] = '\0'; // add null terminator to end of color string
+            
                 }
                 for (int k = i+1; k < strlen(Response); k++){
-                  sz += Response[k];
+                    sz[k-(i+1)] = Response[k];
+                    sz[k-i] = '\0'; // add null terminator to end of size string
                 }
               }
          }
@@ -81,13 +89,13 @@ void Myfoods::readFoods(){
            Serial.println("Invalid input, please enter color and size separated by a space");
 
            // reset variables to be ready for next input
-            Response = "";
-            c = "";
-            sz = "";
+            Response[0] = '\0';
+            c[0] = '\0';
+            sz[0] = '\0';
             color_val = 0;
             size_val = 0;
             spacefound = false;
-            food = "";
+            food[0] = '\0';
             //return to beginning of loop to wait for new input
             return;
          }
@@ -99,13 +107,14 @@ void Myfoods::readFoods(){
 
 void Myfoods::getFruit(){
     // read food needs to run before this function, if function is called before read food, return error message to serial monitor and return to beginning of loop to wait for new input
-    if (c == "" || sz == ""){
+    if (c[0] == '\0' || sz[0] == '\0'){
         Serial.println("readFoods function must be called before getFruit function");
         //return to beginning of loop to wait for new input
         return;
     }else{
         compareFoods();
-        food = fruit[color_val][size_val][random(0,2)];
+        //assign food variable to fruit array value based on color and size values determined in compareFoods function, use random function to return different result with same input
+        strcpy(food, fruit[color_val][size_val][random(0,2)]);
         // continue to let functions determine food based on color and size in ino file
 
     }
@@ -113,24 +122,26 @@ void Myfoods::getFruit(){
 
 void Myfoods::getVegetable(){
     // read food needs to run before this function, if function is called before read food, return error message to serial monitor and return to beginning of loop to wait for new input
-    if (c == "" || sz == ""){
+    if (c[0] == '\0' || sz[0] == '\0'){
         Serial.println("readFoods function must be called before getVegetable function");
         //return to beginning of loop to wait for new input
         return;
     }else{
         compareFoods();
-        food = vegetable[color_val][size_val][random(0,2)];
+        //assign food variable to vegetable array value based on color and size values determined in compareFoods function, use random function to return different result with same input
+        strcpy(food, vegetable[color_val][size_val][random(0,2)]);
     }
 }
 
 void Myfoods::getStarch(){
     // read food needs to run before this function, if function is called before getStarch function, return error message to serial monitor and return to beginning of loop to wait for new input
-    if (c == "" || sz == ""){
+    if (c[0] == '\0' || sz[0] == '\0'){
         Serial.println("readFoods function must be called before getStarch function");
         return;
     }else{
         compareFoods();
-        food = starch[color_val][size_val][random(0,2)];
+        //assign food variable to starch array value based on color and size values determined in compareFoods function, use random function to return different result with same input
+        strcpy(food, starch[color_val][size_val][random(0,2)]);
     }
 }
 
@@ -144,13 +155,13 @@ void Myfoods::printFoods(){
     Serial.print(", we suggest you eat: ");
     Serial.println(food);
 
-    Response = "";
-    c = "";
-    sz = "";
+    Response[0] = '\0';
+    c[0] = '\0';
+    sz[0] = '\0';
     color_val = 0;
     size_val = 0;
     spacefound = false;
-    food = "";
+    food[0] = '\0';
 
 }
 
