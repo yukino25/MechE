@@ -39,4 +39,4 @@ MAT-262:
         Project 1 - Intro. to MATLAB                            1/13/26
 
     Topic 5:
-        Project 2 - What a Drag                                 3/--/26 Incomplete
+        Project 2 - What a Drag                                 3/3/26 Incomplete
