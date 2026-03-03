@@ -14,10 +14,10 @@ ESG-111:
 
     Topic 4:
         Using Compiler Errors to Diagnose Syntax Bugs           2/10/26
-        Using the Serial Monitor to Find Bugs                   2/--/26 Incomplete
+        Using the Serial Monitor to Find Bugs                   2/11/26 
 
     Topic 5:
-        CLC - Checkpoint                                        3/--/26 Incomplete
+        CLC - Checkpoint                                        3/2/26 
         Creating Libraries                                      3/--/26 Incomplete
         Writing a Function to Assess Physical Data              3/--/26 Incomplete
 
