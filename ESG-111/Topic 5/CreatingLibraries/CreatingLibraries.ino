@@ -19,10 +19,10 @@ calls using the same parameters.
 //have random math function to retun different result with same input.
 //switch function in library
 
-#include <CreatingLibraries.h>
+#include "CreatingLibraries.h"
 
 
-MyFoods foods();
+Myfoods food;
 
 void setup() {
   Serial.begin(9600);

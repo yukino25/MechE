@@ -1,0 +1,7 @@
+Myfoods KEYWORD1
+getFruit    KEYWORD2
+getVegetable    KEYWORD2
+getStarch   KEYWORD2
+printFoods  KEYWORD2
+readFoods   KEYWORD2
+begin KEYWORD2
