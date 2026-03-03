@@ -21,8 +21,8 @@ calls using the same parameters.
 
 #include <CreatingLibraries.h>
 
-char color[] = {};
-char size[] = {};
+
+MyFoods foods();
 
 void setup() {
   Serial.begin(9600);
@@ -30,6 +30,6 @@ void setup() {
 }
 
 void loop() {
-    Serial.read();
+
 
 }

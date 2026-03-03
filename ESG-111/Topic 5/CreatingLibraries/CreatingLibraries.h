@@ -1,16 +1,14 @@
+#ifndef CREATINGLIBRARIES_H
+#define CREATINGLIBRARIES_H
+
+#include "Arduino.h"
 
 
+class MyFoods {
+  public:
+    String getFruit(String c, String sz);
+    String getVegetable(String c, String sz);
+    String getStarch(String c, String sz);
+};
 
-
-
-int getfruit(char c,char sz){
-
-}
-
-int getvegetable(char c,char sz){
-
-}
-
-int getstarch(char c,char sz){
-
-}
+#endif
