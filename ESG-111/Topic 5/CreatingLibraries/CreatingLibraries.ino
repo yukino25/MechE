@@ -26,10 +26,19 @@ MyFoods foods();
 
 void setup() {
   Serial.begin(9600);
-
+  food.begin();
 }
 
 void loop() {
-
+  food.readFoods();
+  food.getFruit();
+  food.printFoods();
+  
+  food.readFoods();
+  food.getVegetable();
+  food.printFoods();
+  food.readFoods();
+  food.getStarch();
+  food.printFoods();
 
 }

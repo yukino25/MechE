@@ -6,9 +6,18 @@
 
 class MyFoods {
   public:
-    String getFruit(String c, String sz);
-    String getVegetable(String c, String sz);
-    String getStarch(String c, String sz);
+    void getFruit();
+    void getVegetable();
+    void getStarch();
+    void printFoods();
+    void readFoods();
+    void begin();
+    MyFoods();
+  private:
+    Char Response;
+    Char c;
+    Char sz;
+    Bool spacefound;
 };
 
 #endif
