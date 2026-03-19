@@ -18,8 +18,8 @@ ESG-111:
 
     Topic 5:
         CLC - Checkpoint                                        3/2/26 
-        Creating Libraries                                      3/--/26 Incomplete
-        Writing a Function to Assess Physical Data              3/--/26 Incomplete
+        Creating Libraries                                      3/5/26 Incomplete
+        Writing a Function to Assess Physical Data              3/5/26 Incomplete
 
     Topic 6:
         Fitting and Interpreting Data from an External Source   3/--/26 Incomplete
