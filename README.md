@@ -18,13 +18,13 @@ ESG-111:
 
     Topic 5:
         CLC - Checkpoint                                        3/2/26 
-        Creating Libraries                                      3/5/26 Incomplete
-        Writing a Function to Assess Physical Data              3/5/26 Incomplete
+        Creating Libraries                                      3/5/26
+        Writing a Function to Assess Physical Data              3/5/26
 
     Topic 6:
-        Fitting and Interpreting Data from an External Source   3/--/26 Incomplete
+        Fitting and Interpreting Data from an External Source   3/24/26
         MATLAB On Ramp                                          3/--/26 Incomplete
-        Solving Systems of Equations Using MATLAB               3/--/26 Incomplete
+        Solving Systems of Equations Using MATLAB               3/23/26
         Graphical User Interface and Event-Driven Programming   3/--/26 Incomplete
     
     Topic 7:
@@ -39,4 +39,4 @@ MAT-262:
         Project 1 - Intro. to MATLAB                            1/13/26
 
     Topic 5:
-        Project 2 - What a Drag                                 3/3/26 Incomplete
+        Project 2 - What a Drag                                 3/3/26
