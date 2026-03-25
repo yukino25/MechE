@@ -23,7 +23,7 @@ ESG-111:
 
     Topic 6:
         Fitting and Interpreting Data from an External Source   3/24/26
-        MATLAB On Ramp                                          3/--/26 Incomplete
+        MATLAB On Ramp                                          3/24/26
         Solving Systems of Equations Using MATLAB               3/23/26
         Graphical User Interface and Event-Driven Programming   3/--/26 Incomplete
     
