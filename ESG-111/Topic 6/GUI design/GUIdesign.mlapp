@@ -1,0 +1,123 @@
+classdef app1 < matlab.apps.AppBase
+
+    % Properties that correspond to app components
+    properties (Access = public)
+        UIFigure                     matlab.ui.Figure
+        NicholasSchlosser32526Label  matlab.ui.control.Label
+        GraphicalUserInterfaceandEventDrivenProgrammingLabel  matlab.ui.control.Label
+        SensorDataDropDown           matlab.ui.control.DropDown
+        SensorDataDropDownLabel      matlab.ui.control.Label
+        UIAxes                       matlab.ui.control.UIAxes
+    end
+
+    
+    properties (Access = private)
+        Light = readtable('ESG111GUIData.xlsx','Sheet','Light');
+        Sound = readtable('ESG111GUIData.xlsx','Sheet','Sound');
+        Temperature = readtable('ESG111GUIData.xlsx','Sheet','Temperature');
+    end
+    
+    methods (Access = private)
+        %plot sensor data selected in drop down against
+        function Y = graph(app, SensorData)
+            pY = readtable('ESG111GUIData.xlsx','Sheet', SensorData);
+            Y = pY(2:end,:);
+            plot(app.UIAxes,table2array(Y));
+        end
+    end
+    
+
+    % Callbacks that handle component events
+    methods (Access = private)
+
+        % Callback function: SensorDataDropDown, SensorDataDropDown, 
+        % ...and 1 other component
+        function DataUpdate(app, event)
+            Sensor = app.SensorDataDropDown.Value;
+            if app.SensorDataDropDown.Value == "Light Intensity"
+                Sensor = 'Light';
+            elseif app.SensorDataDropDown.Value == "Sound Pressure"
+                    Sensor = 'Sound';
+            end
+            graph(app,Sensor);
+        end
+    end
+
+    % Component initialization
+    methods (Access = private)
+
+        % Create UIFigure and components
+        function createComponents(app)
+
+            % Create UIFigure and hide until all components are created
+            app.UIFigure = uifigure('Visible', 'off');
+            app.UIFigure.Position = [100 100 640 480];
+            app.UIFigure.Name = 'MATLAB App';
+
+            % Create UIAxes
+            app.UIAxes = uiaxes(app.UIFigure);
+            title(app.UIAxes, 'Title')
+            xlabel(app.UIAxes, 'X')
+            ylabel(app.UIAxes, 'Y')
+            zlabel(app.UIAxes, 'Z')
+            app.UIAxes.FontSize = 14;
+            app.UIAxes.Position = [123 119 380 244];
+
+            % Create SensorDataDropDownLabel
+            app.SensorDataDropDownLabel = uilabel(app.UIFigure);
+            app.SensorDataDropDownLabel.HorizontalAlignment = 'right';
+            app.SensorDataDropDownLabel.FontSize = 18;
+            app.SensorDataDropDownLabel.Position = [169 68 104 24];
+            app.SensorDataDropDownLabel.Text = 'Sensor Data';
+
+            % Create SensorDataDropDown
+            app.SensorDataDropDown = uidropdown(app.UIFigure);
+            app.SensorDataDropDown.Items = {'Temperature', 'Light Intensity', 'Sound Pressure'};
+            app.SensorDataDropDown.DropDownOpeningFcn = createCallbackFcn(app, @DataUpdate, true);
+            app.SensorDataDropDown.ValueChangedFcn = createCallbackFcn(app, @DataUpdate, true);
+            app.SensorDataDropDown.FontSize = 18;
+            app.SensorDataDropDown.ClickedFcn = createCallbackFcn(app, @DataUpdate, true);
+            app.SensorDataDropDown.Position = [288 68 185 24];
+            app.SensorDataDropDown.Value = 'Temperature';
+
+            % Create GraphicalUserInterfaceandEventDrivenProgrammingLabel
+            app.GraphicalUserInterfaceandEventDrivenProgrammingLabel = uilabel(app.UIFigure);
+            app.GraphicalUserInterfaceandEventDrivenProgrammingLabel.FontSize = 18;
+            app.GraphicalUserInterfaceandEventDrivenProgrammingLabel.Position = [84 447 467 24];
+            app.GraphicalUserInterfaceandEventDrivenProgrammingLabel.Text = 'Graphical User Interface and Event-Driven Programming';
+
+            % Create NicholasSchlosser32526Label
+            app.NicholasSchlosser32526Label = uilabel(app.UIFigure);
+            app.NicholasSchlosser32526Label.Position = [489 1 152 22];
+            app.NicholasSchlosser32526Label.Text = 'Nicholas Schlosser 3/25/26';
+
+            % Show the figure after all components are created
+            app.UIFigure.Visible = 'on';
+        end
+    end
+
+    % App creation and deletion
+    methods (Access = public)
+
+        % Construct app
+        function app = app1
+
+            % Create UIFigure and components
+            createComponents(app)
+
+            % Register the app with App Designer
+            registerApp(app, app.UIFigure)
+
+            if nargout == 0
+                clear app
+            end
+        end
+
+        % Code that executes before app deletion
+        function delete(app)
+
+            % Delete UIFigure when app is deleted
+            delete(app.UIFigure)
+        end
+    end
+end
