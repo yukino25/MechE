@@ -3,7 +3,11 @@ classdef app1 < matlab.apps.AppBase
     % Properties that correspond to app components
     properties (Access = public)
         UIFigure                     matlab.ui.Figure
-        NicholasSchlosser32526Label  matlab.ui.control.Label
+        ThemeButtonGroup             matlab.ui.container.ButtonGroup
+        RandomButton                 matlab.ui.control.RadioButton
+        DarkButton                   matlab.ui.control.RadioButton
+        DefaultButton                matlab.ui.control.RadioButton
+        NicholasSchlosser32626Label  matlab.ui.control.Label
         GraphicalUserInterfaceandEventDrivenProgrammingLabel  matlab.ui.control.Label
         SensorDataDropDown           matlab.ui.control.DropDown
         SensorDataDropDownLabel      matlab.ui.control.Label
@@ -15,6 +19,18 @@ classdef app1 < matlab.apps.AppBase
         Light = readtable('ESG111GUIData.xlsx','Sheet','Light');
         Sound = readtable('ESG111GUIData.xlsx','Sheet','Sound');
         Temperature = readtable('ESG111GUIData.xlsx','Sheet','Temperature');
+        W = [0.85 0.85 0.85];
+        B = [0 0 0];
+        DG = [0.07 0.07 0.07];
+        LG = [0.7 0.7 0.7];
+        R1 = [0 0 0];
+        R2 = [0 0 0];
+        R3 = [0 0 0];
+        LineColor = [0.85 0.1 0.1];
+        LineColor1 = [0.85 0.1 0.1];
+        LineColor2 = [0.15 0.55 0.85];
+        LineColorR = [0 0 0];
+        Sensor;
     end
     
     methods (Access = private)
@@ -22,7 +38,17 @@ classdef app1 < matlab.apps.AppBase
         function Y = graph(app, SensorData)
             pY = readtable('ESG111GUIData.xlsx','Sheet', SensorData);
             Y = pY(2:end,:);
-            plot(app.UIAxes,table2array(Y));
+            plot(app.UIAxes,table2array(Y),"Color",app.LineColor);
+            if SensorData == "Light"
+                ylabel(app.UIAxes, 'Intensity (cd)');
+                title(app.UIAxes, 'Light Intensity');
+            elseif SensorData == "Sound"
+                ylabel(app.UIAxes, 'Pressure (Pa)');
+                title(app.UIAxes, 'Sound Pressure');
+            else 
+                ylabel(app.UIAxes, 'Temperature (°F)');
+                title(app.UIAxes, 'Temperature')
+            end
         end
     end
     
@@ -30,16 +56,106 @@ classdef app1 < matlab.apps.AppBase
     % Callbacks that handle component events
     methods (Access = private)
 
+        % Code that executes after component creation
+        function StartUp(app)
+                app.GraphicalUserInterfaceandEventDrivenProgrammingLabel.FontColor = app.B;
+                app.SensorDataDropDownLabel.FontColor = app.B;
+                app.SensorDataDropDownLabel.BackgroundColor = app.W;
+                app.UIFigure.Color = app.W;
+                app.UIAxes.Color = app.LG;
+                app.UIAxes.YColor = app.B;
+                app.UIAxes.XColor = app.B;
+                app.NicholasSchlosser32626Label.FontColor = app.B;
+                app.SensorDataDropDown.FontColor = app.B;
+                app.SensorDataDropDown.BackgroundColor = app.LG;
+                app.RandomButton.FontColor = app.B;
+                app.DefaultButton.FontColor = app.B;
+                app.DarkButton.FontColor = app.B;
+                app.ThemeButtonGroup.HighlightColor = app.W;
+                app.ThemeButtonGroup.BorderColor = app.W;
+                app.ThemeButtonGroup.BackgroundColor = app.W;
+                app.ThemeButtonGroup.ForegroundColor = app.B;
+                DataUpdate(app);
+        end
+
         % Callback function: SensorDataDropDown, SensorDataDropDown, 
         % ...and 1 other component
         function DataUpdate(app, event)
-            Sensor = app.SensorDataDropDown.Value;
+            app.Sensor = app.SensorDataDropDown.Value;
             if app.SensorDataDropDown.Value == "Light Intensity"
-                Sensor = 'Light';
+                app.Sensor = 'Light';
             elseif app.SensorDataDropDown.Value == "Sound Pressure"
-                    Sensor = 'Sound';
+                app.Sensor = 'Sound';
             end
-            graph(app,Sensor);
+            graph(app,app.Sensor);
+        end
+
+        % Callback function: ThemeButtonGroup, ThemeButtonGroup
+        function ThemeChange(app, event)
+            selectedButton = app.ThemeButtonGroup.SelectedObject;
+            if selectedButton == app.DefaultButton
+                app.GraphicalUserInterfaceandEventDrivenProgrammingLabel.FontColor = app.B;
+                app.SensorDataDropDownLabel.FontColor = app.B;
+                app.SensorDataDropDownLabel.BackgroundColor = app.W;
+                app.UIFigure.Color = app.W;
+                app.UIAxes.Color = app.LG;
+                app.UIAxes.YColor = app.B;
+                app.UIAxes.XColor = app.B;
+                app.NicholasSchlosser32626Label.FontColor = app.B;
+                app.SensorDataDropDown.FontColor = app.B;
+                app.SensorDataDropDown.BackgroundColor = app.LG;
+                app.RandomButton.FontColor = app.B;
+                app.DefaultButton.FontColor = app.B;
+                app.DarkButton.FontColor = app.B;
+                app.ThemeButtonGroup.HighlightColor = app.W;
+                app.ThemeButtonGroup.BorderColor = app.W;
+                app.ThemeButtonGroup.BackgroundColor = app.W;
+                app.ThemeButtonGroup.ForegroundColor = app.B;
+                app.LineColor = app.LineColor1;
+            elseif selectedButton == app.DarkButton
+                app.GraphicalUserInterfaceandEventDrivenProgrammingLabel.FontColor = app.W;
+                app.SensorDataDropDownLabel.FontColor = app.W;
+                app.SensorDataDropDownLabel.BackgroundColor = app.B;
+                app.UIFigure.Color = app.B;
+                app.UIAxes.Color = app.DG;
+                app.UIAxes.YColor = app.W;
+                app.UIAxes.XColor = app.W;
+                app.NicholasSchlosser32626Label.FontColor = app.W;
+                app.SensorDataDropDown.FontColor = app.W;
+                app.SensorDataDropDown.BackgroundColor = app.DG;
+                app.RandomButton.FontColor = app.W;
+                app.DefaultButton.FontColor = app.W;
+                app.DarkButton.FontColor = app.W;
+                app.ThemeButtonGroup.HighlightColor = app.B;
+                app.ThemeButtonGroup.BorderColor = app.B;
+                app.ThemeButtonGroup.BackgroundColor = app.B;
+                app.ThemeButtonGroup.ForegroundColor = app.W;
+                app.LineColor = app.LineColor2;
+            else
+                app.R1 = rand(3,1);
+                app.R2 = rand(3,1);
+                app.R3 = rand(3,1);
+                app.LineColorR = rand(3,1);
+                app.GraphicalUserInterfaceandEventDrivenProgrammingLabel.FontColor = app.R1;
+                app.SensorDataDropDownLabel.FontColor = app.R1;
+                app.SensorDataDropDownLabel.BackgroundColor = app.R2;
+                app.UIFigure.Color = app.R2;
+                app.UIAxes.Color = app.R3;
+                app.UIAxes.YColor = app.R1;
+                app.UIAxes.XColor = app.R1;
+                app.NicholasSchlosser32626Label.FontColor = app.R1;
+                app.SensorDataDropDown.FontColor = app.R1;
+                app.SensorDataDropDown.BackgroundColor = app.R3;
+                app.RandomButton.FontColor = app.R1;
+                app.DefaultButton.FontColor = app.R1;
+                app.DarkButton.FontColor = app.R1;
+                app.ThemeButtonGroup.HighlightColor = app.R2;
+                app.ThemeButtonGroup.BorderColor = app.R2;
+                app.ThemeButtonGroup.BackgroundColor = app.R2;
+                app.ThemeButtonGroup.ForegroundColor = app.R1;
+                app.LineColor = app.LineColorR;
+            end
+            graph(app,app.Sensor);
         end
     end
 
@@ -51,23 +167,23 @@ classdef app1 < matlab.apps.AppBase
 
             % Create UIFigure and hide until all components are created
             app.UIFigure = uifigure('Visible', 'off');
+            app.UIFigure.Color = [0 0 0];
             app.UIFigure.Position = [100 100 640 480];
             app.UIFigure.Name = 'MATLAB App';
 
             % Create UIAxes
             app.UIAxes = uiaxes(app.UIFigure);
-            title(app.UIAxes, 'Title')
-            xlabel(app.UIAxes, 'X')
             ylabel(app.UIAxes, 'Y')
             zlabel(app.UIAxes, 'Z')
+            app.UIAxes.ColorOrder = [0.149019607843137 0.549019607843137 0.870588235294118;0.96078431372549 0.466666666666667 0.16078431372549;1 0.909803921568627 0.392156862745098;0.752941176470588 0.36078431372549 0.984313725490196;0.286274509803922 0.858823529411765 0.250980392156863;0.423529411764706 0.956862745098039 1;0.949019607843137 0.403921568627451 0.772549019607843];
             app.UIAxes.FontSize = 14;
-            app.UIAxes.Position = [123 119 380 244];
+            app.UIAxes.Position = [107 133 421 280];
 
             % Create SensorDataDropDownLabel
             app.SensorDataDropDownLabel = uilabel(app.UIFigure);
             app.SensorDataDropDownLabel.HorizontalAlignment = 'right';
             app.SensorDataDropDownLabel.FontSize = 18;
-            app.SensorDataDropDownLabel.Position = [169 68 104 24];
+            app.SensorDataDropDownLabel.Position = [167 79 104 24];
             app.SensorDataDropDownLabel.Text = 'Sensor Data';
 
             % Create SensorDataDropDown
@@ -76,20 +192,53 @@ classdef app1 < matlab.apps.AppBase
             app.SensorDataDropDown.DropDownOpeningFcn = createCallbackFcn(app, @DataUpdate, true);
             app.SensorDataDropDown.ValueChangedFcn = createCallbackFcn(app, @DataUpdate, true);
             app.SensorDataDropDown.FontSize = 18;
+            app.SensorDataDropDown.BackgroundColor = [0.0706 0.0706 0.0706];
             app.SensorDataDropDown.ClickedFcn = createCallbackFcn(app, @DataUpdate, true);
-            app.SensorDataDropDown.Position = [288 68 185 24];
+            app.SensorDataDropDown.Position = [286 79 188 24];
             app.SensorDataDropDown.Value = 'Temperature';
 
             % Create GraphicalUserInterfaceandEventDrivenProgrammingLabel
             app.GraphicalUserInterfaceandEventDrivenProgrammingLabel = uilabel(app.UIFigure);
             app.GraphicalUserInterfaceandEventDrivenProgrammingLabel.FontSize = 18;
-            app.GraphicalUserInterfaceandEventDrivenProgrammingLabel.Position = [84 447 467 24];
+            app.GraphicalUserInterfaceandEventDrivenProgrammingLabel.Position = [87 447 467 24];
             app.GraphicalUserInterfaceandEventDrivenProgrammingLabel.Text = 'Graphical User Interface and Event-Driven Programming';
 
-            % Create NicholasSchlosser32526Label
-            app.NicholasSchlosser32526Label = uilabel(app.UIFigure);
-            app.NicholasSchlosser32526Label.Position = [489 1 152 22];
-            app.NicholasSchlosser32526Label.Text = 'Nicholas Schlosser 3/25/26';
+            % Create NicholasSchlosser32626Label
+            app.NicholasSchlosser32626Label = uilabel(app.UIFigure);
+            app.NicholasSchlosser32626Label.Position = [489 1 152 22];
+            app.NicholasSchlosser32626Label.Text = 'Nicholas Schlosser 3/26/26';
+
+            % Create ThemeButtonGroup
+            app.ThemeButtonGroup = uibuttongroup(app.UIFigure);
+            app.ThemeButtonGroup.SelectionChangedFcn = createCallbackFcn(app, @ThemeChange, true);
+            app.ThemeButtonGroup.BorderColor = [0.149 0.149 0.149];
+            app.ThemeButtonGroup.ForegroundColor = [1 1 1];
+            app.ThemeButtonGroup.HighlightColor = [0.149 0.149 0.149];
+            app.ThemeButtonGroup.Title = 'Theme';
+            app.ThemeButtonGroup.ButtonDownFcn = createCallbackFcn(app, @ThemeChange, true);
+            app.ThemeButtonGroup.Position = [12 22 123 106];
+
+            % Create DefaultButton
+            app.DefaultButton = uiradiobutton(app.ThemeButtonGroup);
+            app.DefaultButton.Text = 'Default';
+            app.DefaultButton.FontColor = [0 0 0];
+            app.DefaultButton.Interpreter = 'html';
+            app.DefaultButton.Position = [11 60 60 22];
+            app.DefaultButton.Value = true;
+
+            % Create DarkButton
+            app.DarkButton = uiradiobutton(app.ThemeButtonGroup);
+            app.DarkButton.Text = 'Dark';
+            app.DarkButton.FontColor = [0 0 0];
+            app.DarkButton.Interpreter = 'html';
+            app.DarkButton.Position = [11 38 47 22];
+
+            % Create RandomButton
+            app.RandomButton = uiradiobutton(app.ThemeButtonGroup);
+            app.RandomButton.Text = 'Random';
+            app.RandomButton.FontColor = [0 0 0];
+            app.RandomButton.Interpreter = 'html';
+            app.RandomButton.Position = [11 16 68 22];
 
             % Show the figure after all components are created
             app.UIFigure.Visible = 'on';
@@ -107,6 +256,9 @@ classdef app1 < matlab.apps.AppBase
 
             % Register the app with App Designer
             registerApp(app, app.UIFigure)
+
+            % Execute the startup function
+            runStartupFcn(app, @StartUp)
 
             if nargout == 0
                 clear app
