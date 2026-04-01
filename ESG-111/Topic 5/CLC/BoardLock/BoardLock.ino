@@ -292,6 +292,7 @@ void RFID_WRITE() {
 //?   pixel 0       → lock state: green=unlocked, red=locked, yellow=card being held
 //?   pixels 1-9    → card hold: fill left→right over HOLD_DURATION
 //?                   grace period: countdown bar shrinks over LOCK_GRACE_MS
+//?                   auto-lock countdown: countdown bar shrinks over AUTO_LOCK_MS
 //?                   otherwise off
 void UPDATE_PIXELS() {
     // Pixel 0: lock / card-held indicator
@@ -320,7 +321,14 @@ void UPDATE_PIXELS() {
         unsigned long remaining = lockGraceEnd - millis();
         numLit = (int)((remaining * 9UL) / LOCK_GRACE_MS);
         if (numLit > 9) numLit = 9;
-        r = 150; g = 60; b = 0;    // orange countdown
+        r = 150; g = 60; b = 0;    // orange: grace period countdown
+    } else if (!lock && autoLockMode && lastMovementTime > 0) {
+        // Shrink left as auto-lock countdown expires
+        unsigned long elapsed = millis() - lastMovementTime;
+        unsigned long remaining = (elapsed >= AUTO_LOCK_MS) ? 0 : AUTO_LOCK_MS - elapsed;
+        numLit = (int)((remaining * 9UL) / AUTO_LOCK_MS);
+        if (numLit > 9) numLit = 9;
+        r = 0; g = 0; b = 100;     // blue: auto-lock countdown matches pixel 0
     }
 
     for (int i = 1; i <= 9; i++) {
@@ -468,18 +476,23 @@ void ALARM_UPDATE() {
 
 
 //? auto-lock after AUTO_LOCK_MS of no movement (auto mode only, board must be unlocked)
+//? lastMovementTime here tracks when the no-movement period started (0 = movement detected / timer reset)
 void AUTO_LOCK_CHECK() {
     if (!autoLockMode) return;
 
     if (MOVEMENT_DETECT()) {
-        lastMovementTime = millis();
-    } else if (lastMovementTime > 0 && millis() - lastMovementTime >= AUTO_LOCK_MS) {
-        lock = true;
-        lockGraceEnd = millis() + LOCK_GRACE_MS;
-        lastMovementTime = 0;
-        noMovementSince = 0;
-        alarmSounding = false;
-        Serial.println(F("AUTO LOCKED: no motion detected"));
+        lastMovementTime = 0;   // movement detected: reset no-movement timer
+    } else {
+        if (lastMovementTime == 0) {
+            lastMovementTime = millis();   // first quiet sample: start timer
+        } else if (millis() - lastMovementTime >= AUTO_LOCK_MS) {
+            lock = true;
+            lockGraceEnd = millis();   // no extra grace period — 10s no-movement was already the wait
+            lastMovementTime = 0;
+            noMovementSince = 0;
+            alarmSounding = false;
+            Serial.println(F("AUTO LOCKED: no motion detected"));
+        }
     }
 }
 
