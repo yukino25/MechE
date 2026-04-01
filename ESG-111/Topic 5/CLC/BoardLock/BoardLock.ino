@@ -7,8 +7,6 @@ CPX toggle switch between read and write mode for RFID
 */
 
 
-//TODO: increase threashhold for movement, currently false positive and doesnt set lock
-//TODO: use neopixels to indicate lock state and mode (auto vs manual), when card is detected and when movement is detected
 
 
 //*Libraries
@@ -40,7 +38,7 @@ CPX toggle switch between read and write mode for RFID
 //*Variables
 //accelerometer variables
 float x, y, z;
-const float threshold = 1.5; //threshold for movement detection
+const float threshold = 2.5; //threshold for movement detection
 float magnitude;
 
 //lock state variable, toggle when correct RFID tag is detected, controls whether movement detection and buzzer are active
@@ -290,6 +288,51 @@ void RFID_WRITE() {
 
 
 
+//? update NeoPixels:
+//?   pixel 0       → lock state: green=unlocked, red=locked, yellow=card being held
+//?   pixels 1-9    → card hold: fill left→right over HOLD_DURATION
+//?                   grace period: countdown bar shrinks over LOCK_GRACE_MS
+//?                   otherwise off
+void UPDATE_PIXELS() {
+    // Pixel 0: lock / card-held indicator
+    if (cardPending) {
+        CircuitPlayground.setPixelColor(0, 200, 200, 0);         // yellow: card held
+    } else if (lock) {
+        CircuitPlayground.setPixelColor(0, 100, 0, 0);           // red: locked
+    } else if (autoLockMode) {
+        CircuitPlayground.setPixelColor(0, 0, 0, 100);           // blue: unlocked, auto mode
+    } else {
+        CircuitPlayground.setPixelColor(0, 0, 100, 0);           // green: unlocked, manual mode
+    }
+
+    // Pixels 1-9: progress bar
+    int numLit = 0;
+    byte r = 0, g = 0, b = 0;
+
+    if (cardPending) {
+        // Fill right as card is held toward HOLD_DURATION
+        unsigned long elapsed = millis() - cardDetectedTime;
+        numLit = (int)((elapsed * 9UL) / HOLD_DURATION);
+        if (numLit > 9) numLit = 9;
+        r = 200; g = 200; b = 0;   // yellow bar matches pixel 0
+    } else if (lock && millis() < lockGraceEnd) {
+        // Shrink left as grace period expires
+        unsigned long remaining = lockGraceEnd - millis();
+        numLit = (int)((remaining * 9UL) / LOCK_GRACE_MS);
+        if (numLit > 9) numLit = 9;
+        r = 150; g = 60; b = 0;    // orange countdown
+    }
+
+    for (int i = 1; i <= 9; i++) {
+        if (i - 1 < numLit) {
+            CircuitPlayground.setPixelColor(i, r, g, b);
+        } else {
+            CircuitPlayground.setPixelColor(i, 0, 0, 0);
+        }
+    }
+}
+
+
 //? main run loop: card handling, alarm, and auto-lock
 void RUN(){
     // Resolve any pending card tap/hold interaction
@@ -309,6 +352,7 @@ void RUN(){
     } else {
         AUTO_LOCK_CHECK();
     }
+    UPDATE_PIXELS();
 }
 
 
