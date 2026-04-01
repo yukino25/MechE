@@ -5,6 +5,12 @@ external RC522 RFID reader to detect when a specific RFID tag is near, disable t
 and re-enable the buzzer when the tag actives again.
 CPX toggle switch between read and write mode for RFID
 */
+
+
+//TODO: increase threashhold for movement, currently false positive and doesnt set lock
+//TODO: use neopixels to indicate lock state and mode (auto vs manual), when card is detected and when movement is detected
+
+
 //*Libraries
 #include <Adafruit_CircuitPlayground.h>
 #include <SPI.h>
