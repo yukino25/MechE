@@ -25,12 +25,12 @@ ESG-111:
         Fitting and Interpreting Data from an External Source   3/24/26
         MATLAB On Ramp                                          3/24/26
         Solving Systems of Equations Using MATLAB               3/23/26
-        Graphical User Interface and Event-Driven Programming   3/--/26 Incomplete
+        Graphical User Interface and Event-Driven Programming   3/28/26
     
     Topic 7:
         CLC – Basic Software Engineering                        4/--/26 Incomplete
         Modeling Real-World Problems                            4/--/26 Incomplete
-        Object-Oriented Programming                             4/--/26 Incomplete
+        Object-Oriented Programming                             4/6/26
 
 
 # MAT-262
