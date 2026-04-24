@@ -1,108 +1,157 @@
-%code simplified mathematical model of the carbon cycle.
-%Carbon is exchanged and transformed in various forms through various natural processes.
-%Creating a computational model helps us investigate trends and the influences of various factors
+function [xl, xd, ya, ys] = carbonxchnge(xl0, xd0, ya0, ys0, N, dt, params)
 
-% Create a function to estimate the amount of carbon in each "bucket" over time,
-% given initial conditions and the following parameter values.
-% Your function should accept a vector with the parameter values as an input.
-% The function prototype should be
-%  [X1,Xd,Ya,Ys] = carbonxchange(X1_0,Xd_0,Ya_0,Ys_0,N,dt,params)
-
-% Run the model for 600 years with 100 samples per year. Plot the values over time.
-% rate of terrestric net assimilation of perineal plants 8 mg cm^-2 yr^-1
-% k4 value is abitrary
-% The first step in Eulers method is to convert our differential equations
-% into finite difference equations. To do this, we need to consider the definition of the first derivative:
-% dx_dt = (x_n+1 - x_n) / dt
-% ds_dt = (X1 - s) / tau
-% with time delay: s(t+1) = s(t) + (x1(t)-s(t))/tau * dt
-
-% Define carbon states
-X1_0 = 400; %mg Cm^-2
-Xd_0 = 500; %mg Cm^-2
-Ya_0 = 460; %mg Cm^-2
-Ys_0 = 25000; %mg Cm^-2
-k1 = 4.3e-5; % cm^2 mg^-1 yr^-1
-k2 = 2.0e-2; % yr^-1
-k3 = 1.6e-2; % yr^-1
-k4 = 1; % yr^-1
-k5 = 1.8e-2; % yr^-1
-tau = 50; % years, time lag
-params = [k1, k2, k3, k4, k5];
-N = 600 * 100; % total number of time steps (600 years with 100 samples per year)
-dt = 1 / 100; % time step in years
-time = (0:N)' * dt; % time vector
-[X1, Xd, Ya, Ys] = carbonxchange(X1_0, Xd_0, Ya_0, Ys_0, N, dt, params, tau);
-
-% carbon cycle function
-function [X1, Xd, Ya, Ys] = carbonxchange(X1_0, Xd_0, Ya_0, Ys_0, N, dt, params, tau)
-
-    X1 = zeros(1,N+1);
-    Xd = zeros(1,N+1);
-    Ya = zeros(1,N+1);
-    Ys = zeros(1,N+1);
-    s = zeros(1,N+1); 
-
-    % Set initial conditions
-    X1(1) = X1_0;
-    Xd(1) = Xd_0;
-    Ya(1) = Ya_0;
-    Ys(1) = Ys_0;
-    s(1) = 1;
-
-    % Unpack parameters
+    % parameters
     k1 = params(1);
     k2 = params(2);
     k3 = params(3);
     k4 = params(4);
     k5 = params(5);
-    tau = tau;
+
+    % Total carbon
+    a = xl0 + xd0 + ya0 + ys0;
+
+    % output arrays
+    xl = zeros(1, N+1);
+    xd = zeros(1, N+1);
+    ya = zeros(1, N+1);
+    ys = zeros(1, N+1);
+
+    % initial conditions
+    xl(1) = xl0;
+    xd(1) = xd0;
+    ya(1) = ya0;
+    ys(1) = ys0;
+
+    for n = 1:N
+        dxl = k1 * xl(n) * ya(n) - k2 * xl(n);
+        dxd = k2 * xl(n) - k3 * xd(n);
+        dys = k4 * (ya(n) - k5 * ys(n));
+
+        xl(n+1) = xl(n) + dt * dxl;
+        xd(n+1) = xd(n) + dt * dxd;
+        ys(n+1) = ys(n) + dt * dys;
+
+        ya(n+1) = a - xl(n+1) - xd(n+1) - ys(n+1);
+    end
+end
 
 
 
-    % Time loop (Euler's method)
-    for t = 1:N
-        dX1_dt = k1 * X1(t) * Ya(t) - k2 * X1(t); % photosynthesis minus plant respiration
-        dXd_dt = k2 * X1(t) - k3 * Xd(t);            % plant death minus decomposition
-        dYs_dt = k4 * (Ya(t) - k5 * Ys(t));           % ocean absorption and release
-        dYa_dt = -dX1_dt - dXd_dt - dYs_dt;               % atmosphere: conservation of total carbon
 
-        % Update states using Euler's method
-        X1(t+1) = X1(t) + (k1 * X1(t) * Ya(t)) * dt - (k2 * s(t)) * dt;
-        X1(t+1) = X1(t) + dX1_dt * dt;
-        Xd(t+1) = Xd(t) + dXd_dt * dt;
-        Ys(t+1) = Ys(t) + dYs_dt * dt;
-        Ya(t+1) = Ya(t) + dYa_dt * dt;
+% Parameters
+k1 = 4.3e-5;   % cm^2 mg^-1 yr^-1
+k2 = 2.0e-2;   % yr^-1
+k3 = 1.6e-2;   % yr^-1
+k5 = 1.8e-2;   % yr^-1
+
+% k4 is arbitrary
+k4 = k5;
+
+params = [k1, k2, k3, k4, k5];
+
+% Initial conditions
+xl0 = 400;      % mg cm^-2
+xd0 = 500;      % mg cm^-2
+ya0 = 460;      % mg cm^-2
+ys0 = 25000;    % mg cm^-2
+T  = 600;       % Total simulation time [years]
+fs = 100;       % Samples per year
+N  = T * fs;    % Number of time steps
+dt = 1 / fs;    % Time step [years]
+t  = (0:N) * dt;
+
+% basic model, no time lag
+[xl, xd, ya, ys] = carbonxchnge(xl0, xd0, ya0, ys0, N, dt, params);
+
+figure('Name', 'Carbon Cycle - Basic Model', 'NumberTitle', 'off');
+subplot(2,2,1);
+plot(t, xl, 'g', 'LineWidth', 1.5);
+xlabel('Time (years)'); ylabel('Carbon (mg cm^{-2})');
+title('Living Plants (x_l)'); grid on;
+
+subplot(2,2,2);
+plot(t, xd, 'r', 'LineWidth', 1.5);
+xlabel('Time (years)'); ylabel('Carbon (mg cm^{-2})');
+title('Dead Organic Matter (x_d)'); grid on;
+
+subplot(2,2,3);
+plot(t, ya, 'b', 'LineWidth', 1.5);
+xlabel('Time (years)'); ylabel('Carbon (mg cm^{-2})');
+title('Atmosphere (y_a)'); grid on;
+
+subplot(2,2,4);
+plot(t, ys, 'c', 'LineWidth', 1.5);
+xlabel('Time (years)'); ylabel('Carbon (mg cm^{-2})');
+title('Sea (y_s)'); grid on;
+
+sgtitle('Carbon Cycle Model (Eriksson & Welander, 1956)');
+
+
+% Time lag
+tau_values = [10, 50, 100];   % Years
+colors = {'g', 'm', 'b'};
+legend_entries = {};
+
+figure('Name', 'Carbon Cycle - Time-Lag Model', 'NumberTitle', 'off');
+
+for idx = 1:length(tau_values)
+    tau = tau_values(idx);
+
+    % output arrays
+    xl_lag = zeros(1, N+1);
+    xd_lag = zeros(1, N+1);
+    ya_lag = zeros(1, N+1);
+    ys_lag = zeros(1, N+1);
+    s_lag  = zeros(1, N+1);
+
+    % Initial conditions, s starts equal to xl
+    xl_lag(1) = xl0;
+    xd_lag(1) = xd0;
+    ya_lag(1) = ya0;
+    ys_lag(1) = ys0;
+    s_lag(1)  = xl0;
+
+    a = xl0 + xd0 + ya0 + ys0;
+
+    for n = 1:N
+        dxl = k1 * xl_lag(n) * ya_lag(n) - k2 * s_lag(n); 
+        dxd = k2 * s_lag(n) - k3 * xd_lag(n);
+        dys = k4 * (ya_lag(n) - k5 * ys_lag(n));
+        ds  = (xl_lag(n) - s_lag(n)) / tau;
+
+        xl_lag(n+1) = xl_lag(n) + dt * dxl;
+        xd_lag(n+1) = xd_lag(n) + dt * dxd;
+        ys_lag(n+1) = ys_lag(n) + dt * dys;
+        s_lag(n+1)  = s_lag(n)  + dt * ds;
+
+        ya_lag(n+1) = a - xl_lag(n+1) - xd_lag(n+1) - ys_lag(n+1);
     end
 
-    % Plot results
-    time = (0:N-1)' * dt;
+    subplot(2,2,1); hold on;
+    plot(t, xl_lag, colors{idx}, 'LineWidth', 1.5);
 
-    figure;
-    plot(time, X1, 'r');
-    legend('X1 (Terrestrial Carbon)');
-    xlabel('Time (years)');
-    ylabel('Carbon Amount (mg Cm^{-2})');
-    title('Terrestrial Carbon (X1) over Time');
+    subplot(2,2,2); hold on;
+    plot(t, xd_lag, colors{idx}, 'LineWidth', 1.5);
 
-    figure;
-    plot(time, Xd, 'g');
-    legend('Xd (Decomposed Carbon)');
-    xlabel('Time (years)');
-    ylabel('Carbon Amount (mg Cm^{-2})');
-    title('Decomposed Carbon (Xd) over Time');
+    subplot(2,2,3); hold on;
+    plot(t, ya_lag, colors{idx}, 'LineWidth', 1.5);
 
-    figure;
-    plot(time, Ya, 'b');
-    legend('Ya (Atmospheric Carbon)');
-    xlabel('Time (years)');
-    ylabel('Carbon Amount (mg Cm^{-2})');
-    title('Atmospheric Carbon (Ya) over Time');
+    subplot(2,2,4); hold on;
+    plot(t, ys_lag, colors{idx}, 'LineWidth', 1.5);
 
-    figure;
-    plot(time, Ys, 'c');
-    legend('Ys (Ocean Carbon)');
-    xlabel('Time (years)');
-    ylabel('Carbon Amount (mg Cm^{-2})');
-    title('Ocean Carbon (Ys) over Time');
+    legend_entries{end+1} = sprintf('\\tau = %d yr', tau);
 end
+
+subplot(2,2,1); xlabel('Time (years)'); ylabel('Carbon (mg cm^{-2})');
+title('Living Plants (x_l)'); grid on; legend(legend_entries);
+
+subplot(2,2,2); xlabel('Time (years)'); ylabel('Carbon (mg cm^{-2})');
+title('Dead Organic Matter (x_d)'); grid on; legend(legend_entries);
+
+subplot(2,2,3); xlabel('Time (years)'); ylabel('Carbon (mg cm^{-2})');
+title('Atmosphere (y_a)'); grid on; legend(legend_entries);
+
+subplot(2,2,4); xlabel('Time (years)'); ylabel('Carbon (mg cm^{-2})');
+title('Sea (y_s)'); grid on; legend(legend_entries);
+
+sgtitle('Carbon Cycle Model with Time Lag (\tau)');

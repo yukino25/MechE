@@ -28,8 +28,8 @@ ESG-111:
         Graphical User Interface and Event-Driven Programming   3/28/26
     
     Topic 7:
-        CLC – Basic Software Engineering                        4/--/26 Incomplete
-        Modeling Real-World Problems                            4/--/26 Incomplete
+        CLC – Basic Software Engineering                        4/19/26
+        Modeling Real-World Problems                            4/21/26
         Object-Oriented Programming                             4/6/26
 
 
